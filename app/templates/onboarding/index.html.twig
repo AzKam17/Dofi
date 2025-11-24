@@ -1,0 +1,19 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Onboarding{% endblock %}
+
+{% block stylesheets %}
+    {{ encore_entry_link_tags('onboarding') }}
+{% endblock %}
+
+{% block javascripts %}
+    {{ encore_entry_script_tags('onboarding') }}
+{% endblock %}
+
+{% block body %}
+<div
+    id="onboarding-root"
+    data-current-step="{{ current_step }}"
+    data-first-name="{{ user.firstName|default('') }}"
+></div>
+{% endblock %}

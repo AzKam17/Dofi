@@ -34,6 +34,10 @@ class User implements UserInterface
     #[ORM\Column(type: 'boolean')]
     private bool $isVerified = false;
 
+    #[ORM\OneToOne(inversedBy: 'owner', targetEntity: Restaurant::class, cascade: ['persist', 'remove'])]
+    #[ORM\JoinColumn(name: 'restaurant_id', referencedColumnName: 'id', nullable: true)]
+    private ?Restaurant $restaurant = null;
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
@@ -128,5 +132,24 @@ class User implements UserInterface
         $this->isVerified = $isVerified;
 
         return $this;
+    }
+
+    public function getRestaurant(): ?Restaurant
+    {
+        return $this->restaurant;
+    }
+
+    public function setRestaurant(?Restaurant $restaurant): static
+    {
+        $this->restaurant = $restaurant;
+
+        return $this;
+    }
+
+    public function hasCompletedOnboarding(): bool
+    {
+        return $this->firstName !== null
+            && $this->firstName !== 'User'
+            && $this->restaurant !== null;
     }
 }

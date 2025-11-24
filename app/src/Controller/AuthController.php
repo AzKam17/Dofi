@@ -129,6 +129,10 @@ class AuthController extends AbstractController
                         'session_id' => $session->getId()
                     ]);
 
+                    if (!$user->hasCompletedOnboarding()) {
+                        return $this->redirectToRoute('onboarding_index');
+                    }
+
                     return $this->redirectToRoute('app_home');
                 } else {
                     $error = 'Invalid or expired OTP code';
