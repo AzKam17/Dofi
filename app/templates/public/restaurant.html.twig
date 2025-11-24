@@ -1,0 +1,24 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ restaurant.name }}{% endblock %}
+
+{% block stylesheets %}
+    {{ encore_entry_link_tags('restaurant-public') }}
+{% endblock %}
+
+{% block javascripts %}
+    {{ encore_entry_script_tags('restaurant-public') }}
+{% endblock %}
+
+{% block body %}
+<div
+    id="restaurant-public-root"
+    data-restaurant-name="{{ restaurant.name }}"
+    data-menus="{{ menus|map(m => {
+        id: m.id,
+        name: m.name,
+        type: m.type,
+        filePath: m.filePath
+    })|json_encode|e('html_attr') }}"
+></div>
+{% endblock %}

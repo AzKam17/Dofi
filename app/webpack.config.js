@@ -26,6 +26,7 @@ Encore
     .addEntry('onboarding', './assets/onboarding.tsx')
     .addEntry('home', './assets/home.tsx')
     .addEntry('menu-page', './assets/menu-page.tsx')
+    .addEntry('restaurant-public', './assets/restaurant-public.tsx')
 
     // When enabled, Webpack "splits" your files into smaller pieces for greater optimization.
     .splitEntryChunks()

@@ -34,6 +34,8 @@ security:
     access_control:
         - { path: ^/login, roles: PUBLIC_ACCESS }
         - { path: ^/verify, roles: PUBLIC_ACCESS }
+        - { path: ^/restaurant/, roles: PUBLIC_ACCESS }
+        - { path: ^/uploads/, roles: PUBLIC_ACCESS }
         - { path: ^/home, roles: ROLE_USER }
 
 when@test:
