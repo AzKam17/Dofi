@@ -24,6 +24,8 @@ Encore
     .addEntry('auth-login', './assets/auth-login.tsx')
     .addEntry('auth-verify', './assets/auth-verify.tsx')
     .addEntry('onboarding', './assets/onboarding.tsx')
+    .addEntry('home', './assets/home.tsx')
+    .addEntry('menu-page', './assets/menu-page.tsx')
 
     // When enabled, Webpack "splits" your files into smaller pieces for greater optimization.
     .splitEntryChunks()

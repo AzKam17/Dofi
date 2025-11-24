@@ -1,0 +1,18 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Menu{% endblock %}
+
+{% block stylesheets %}
+    {{ encore_entry_link_tags('menu-page') }}
+{% endblock %}
+
+{% block javascripts %}
+    {{ encore_entry_script_tags('menu-page') }}
+{% endblock %}
+
+{% block body %}
+<div
+    id="menu-root"
+    data-restaurant-id="{{ user.restaurant.id }}"
+></div>
+{% endblock %}

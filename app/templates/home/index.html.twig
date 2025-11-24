@@ -1,0 +1,19 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Accueil{% endblock %}
+
+{% block stylesheets %}
+    {{ encore_entry_link_tags('home') }}
+{% endblock %}
+
+{% block javascripts %}
+    {{ encore_entry_script_tags('home') }}
+{% endblock %}
+
+{% block body %}
+<div
+    id="home-root"
+    data-user-name="{{ user.firstName }}"
+    data-restaurant-name="{{ user.restaurant.name }}"
+></div>
+{% endblock %}
