@@ -2,47 +2,18 @@
 
 {% block title %}Login{% endblock %}
 
+{% block stylesheets %}
+    {{ encore_entry_link_tags('auth-login') }}
+{% endblock %}
+
+{% block javascripts %}
+    {{ encore_entry_script_tags('auth-login') }}
+{% endblock %}
+
 {% block body %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow">
-                <div class="card-body p-5">
-                    <h2 class="text-center mb-4">Login</h2>
-
-                    {% if error %}
-                        <div class="alert alert-danger" role="alert">
-                            {{ error }}
-                        </div>
-                    {% endif %}
-
-                    <form method="post">
-                        <div class="mb-4">
-                            <label for="phone_number" class="form-label">Phone Number</label>
-                            <input
-                                type="tel"
-                                class="form-control form-control-lg"
-                                id="phone_number"
-                                name="phone_number"
-                                placeholder="0779136356"
-                                value="{{ phone_number }}"
-                                required
-                                autofocus
-                            >
-                            <small class="form-text text-muted">
-                                Enter your phone number to receive an OTP code via WhatsApp
-                            </small>
-                        </div>
-
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary btn-lg">
-                                Send OTP Code
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+<div
+    id="login-root"
+    data-error="{{ error|default('') }}"
+    data-phone-number="{{ phone_number|default('') }}"
+></div>
 {% endblock %}
