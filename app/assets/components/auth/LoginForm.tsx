@@ -19,23 +19,23 @@ export function LoginForm({ error, phoneNumber }: LoginFormProps) {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white p-4">
-      <Card className="w-full max-w-md border-2 border-black">
-        <CardHeader className="space-y-3 text-center border-b-2 border-black">
-          <div className="mx-auto w-16 h-16 bg-black flex items-center justify-center">
+    <div className="min-h-screen flex items-center justify-center bg-white p-4 font-sans">
+      <Card className="w-full max-w-md">
+        <CardHeader className="space-y-3 text-center">
+          <div className="mx-auto w-16 h-16 bg-black flex items-center justify-center rounded-lg">
             <Phone className="w-8 h-8 text-white" />
           </div>
           <CardTitle className="text-3xl font-bold text-black">
             Connexion
           </CardTitle>
-          <CardDescription className="text-base text-black">
+          <CardDescription className="text-base text-gray-600">
             Entrez votre numéro de téléphone pour recevoir un code OTP via WhatsApp
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-6">
           <form method="post" onSubmit={handleSubmit}>
             {error && (
-              <div className="mb-4 p-4 border-2 border-black bg-white text-black text-sm">
+              <div className="mb-4 p-4 rounded-lg bg-red-50 text-red-800 text-sm">
                 <span>{error}</span>
               </div>
             )}
@@ -46,7 +46,7 @@ export function LoginForm({ error, phoneNumber }: LoginFormProps) {
                   Numéro de téléphone
                 </Label>
                 <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black w-5 h-5" />
+                  <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
                   <Input
                     id="phone_number"
                     name="phone_number"
@@ -56,17 +56,17 @@ export function LoginForm({ error, phoneNumber }: LoginFormProps) {
                     onChange={(e) => setPhone(e.target.value)}
                     required
                     autoFocus
-                    className="pl-10 h-12 text-lg border-2 border-black"
+                    className="pl-10 h-12 text-lg border-gray-300 rounded-lg"
                   />
                 </div>
-                <p className="text-xs text-black">
+                <p className="text-xs text-gray-600">
                   Nous vous enverrons un code de vérification à 6 chiffres
                 </p>
               </div>
 
               <Button
                 type="submit"
-                className="w-full h-12 text-base font-semibold bg-black text-white hover:bg-gray-800 border-2 border-black"
+                className="w-full h-12 text-base font-semibold bg-black text-white hover:bg-gray-800 rounded-lg"
                 disabled={isLoading}
               >
                 {isLoading ? (

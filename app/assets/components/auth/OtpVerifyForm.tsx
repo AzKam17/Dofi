@@ -37,16 +37,16 @@ export function OtpVerifyForm({ error, phoneNumber, expiresIn }: OtpVerifyFormPr
   const seconds = timeLeft % 60
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white p-4">
-      <Card className="w-full max-w-md border-2 border-black">
-        <CardHeader className="space-y-3 text-center border-b-2 border-black">
-          <div className="mx-auto w-16 h-16 bg-black flex items-center justify-center">
+    <div className="min-h-screen flex items-center justify-center bg-white p-4 font-sans">
+      <Card className="w-full max-w-md">
+        <CardHeader className="space-y-3 text-center">
+          <div className="mx-auto w-16 h-16 bg-black flex items-center justify-center rounded-lg">
             <Shield className="w-8 h-8 text-white" />
           </div>
           <CardTitle className="text-3xl font-bold text-black">
             Vérification OTP
           </CardTitle>
-          <CardDescription className="text-base text-black">
+          <CardDescription className="text-base text-gray-600">
             Nous avons envoyé un code à 6 chiffres au
             <div className="font-semibold text-black mt-1">{phoneNumber}</div>
           </CardDescription>
@@ -54,7 +54,7 @@ export function OtpVerifyForm({ error, phoneNumber, expiresIn }: OtpVerifyFormPr
         <CardContent className="pt-6">
           <form method="post" onSubmit={handleSubmit}>
             {error && (
-              <div className="mb-4 p-4 border-2 border-black bg-white text-black text-sm">
+              <div className="mb-4 p-4 rounded-lg bg-red-50 text-red-800 text-sm">
                 <span>{error}</span>
               </div>
             )}
@@ -75,19 +75,19 @@ export function OtpVerifyForm({ error, phoneNumber, expiresIn }: OtpVerifyFormPr
                   maxLength={6}
                   required
                   autoFocus
-                  className="text-center text-3xl font-bold tracking-[0.5em] h-16 border-2 border-black"
+                  className="text-center text-3xl font-bold tracking-[0.5em] h-16 border-gray-300 rounded-lg"
                   style={{ letterSpacing: "0.5em" }}
                 />
                 <div className="flex items-center justify-center gap-2 text-sm">
                   {timeLeft > 0 ? (
-                    <p className="text-black">
+                    <p className="text-gray-600">
                       Le code expire dans{" "}
                       <span className="font-semibold text-black">
                         {minutes}:{seconds.toString().padStart(2, "0")}
                       </span>
                     </p>
                   ) : (
-                    <p className="text-black font-semibold">Code expiré</p>
+                    <p className="text-red-600 font-semibold">Code expiré</p>
                   )}
                 </div>
               </div>
@@ -95,7 +95,7 @@ export function OtpVerifyForm({ error, phoneNumber, expiresIn }: OtpVerifyFormPr
               <div className="space-y-3">
                 <Button
                   type="submit"
-                  className="w-full h-12 text-base font-semibold bg-black text-white hover:bg-gray-800 border-2 border-black"
+                  className="w-full h-12 text-base font-semibold bg-black text-white hover:bg-gray-800 rounded-lg"
                   disabled={isLoading || otp.length !== 6}
                 >
                   {isLoading ? (
@@ -118,7 +118,7 @@ export function OtpVerifyForm({ error, phoneNumber, expiresIn }: OtpVerifyFormPr
                   <Button
                     type="button"
                     variant="outline"
-                    className="w-full h-12 text-base border-2 border-black text-black hover:bg-gray-100"
+                    className="w-full h-12 text-base border-gray-300 text-black hover:bg-gray-100 rounded-lg"
                   >
                     <ArrowLeft className="w-5 h-5 mr-2" />
                     Retour à la connexion
