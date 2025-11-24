@@ -13,6 +13,9 @@ use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
 class AuthController extends AbstractController
 {
@@ -22,7 +25,8 @@ class AuthController extends AbstractController
         private WhatsAppService $whatsAppService,
         private Security $security,
         private LoggerInterface $logger,
-        private EntityManagerInterface $entityManager
+        private EntityManagerInterface $entityManager,
+        private TokenStorageInterface $tokenStorage
     ) {}
 
     #[Route('/login', name: 'auth_login')]
@@ -113,7 +117,12 @@ class AuthController extends AbstractController
                         $this->logger->info('User verified', ['phone_number' => $phoneNumber]);
                     }
 
-                    $this->security->login($user);
+                    $token = new UsernamePasswordToken($user, 'main', $user->getRoles());
+                    $this->tokenStorage->setToken($token);
+                    $request->getSession()->set('_security_main', serialize($token));
+
+                    $this->logger->info('User logged in', ['phone_number' => $phoneNumber]);
+
                     return $this->redirectToRoute('app_home');
                 } else {
                     $error = 'Invalid or expired OTP code';
