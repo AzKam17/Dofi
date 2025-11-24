@@ -15,11 +15,33 @@ interface RestaurantPublicPageProps {
 
 export function RestaurantPublicPage({ restaurantName, menus }: RestaurantPublicPageProps) {
   const [activeMenuIndex, setActiveMenuIndex] = React.useState(0)
+  const tabRefs = React.useRef<(HTMLButtonElement | null)[]>([])
+  const [indicatorStyle, setIndicatorStyle] = React.useState({ left: 0, width: 0 })
+
+  React.useEffect(() => {
+    const activeTab = tabRefs.current[activeMenuIndex]
+    if (activeTab) {
+      setIndicatorStyle({
+        left: activeTab.offsetLeft,
+        width: activeTab.offsetWidth,
+      })
+    }
+  }, [activeMenuIndex])
 
   if (menus.length === 0) {
     return (
       <div className="min-h-screen bg-white font-sans">
-        <header className="border-b border-gray-300 bg-white">
+        {/* Header with background and logo placeholder */}
+        <header className="bg-white">
+          <div className="relative h-32 bg-gray-200 w-full">
+            {/* Background image placeholder */}
+            <div className="absolute inset-0 flex items-center">
+              <div className="ml-6">
+                {/* Logo placeholder - square, vertically centered */}
+                <div className="w-20 h-20 bg-gray-400 rounded-lg"></div>
+              </div>
+            </div>
+          </div>
           <div className="max-w-7xl mx-auto px-4 py-6">
             <h1 className="text-3xl font-bold text-black">{restaurantName}</h1>
           </div>
@@ -35,25 +57,47 @@ export function RestaurantPublicPage({ restaurantName, menus }: RestaurantPublic
 
   return (
     <div className="min-h-screen bg-white font-sans">
-      <header className="border-b border-gray-300 bg-white sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <h1 className="text-3xl font-bold text-black mb-4">{restaurantName}</h1>
+      <header className="bg-white sticky top-0 z-10">
+        {/* Header with background and logo placeholder */}
+        <div className="relative h-32 bg-gray-200 w-full">
+          {/* Background image placeholder */}
+          <div className="absolute inset-0 flex items-center">
+            <div className="ml-6">
+              {/* Logo placeholder - square, vertically centered */}
+              <div className="w-20 h-20 bg-gray-400 rounded-lg"></div>
+            </div>
+          </div>
+        </div>
 
-          {/* Tab Menu */}
-          <div className="flex gap-2 overflow-x-auto">
-            {menus.map((menu, index) => (
-              <button
-                key={menu.id}
-                onClick={() => setActiveMenuIndex(index)}
-                className={`px-6 py-3 text-base font-medium rounded-lg whitespace-nowrap transition-colors ${
-                  activeMenuIndex === index
-                    ? "bg-black text-white"
-                    : "bg-gray-100 text-black hover:bg-gray-200"
-                }`}
-              >
-                {menu.name}
-              </button>
-            ))}
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <h1 className="text-2xl font-bold text-black mb-4">{restaurantName}</h1>
+
+          {/* Tab Menu with underline indicator */}
+          <div className="relative">
+            <div className="flex overflow-x-auto">
+              {menus.map((menu, index) => (
+                <button
+                  key={menu.id}
+                  ref={(el) => {
+                    tabRefs.current[index] = el
+                  }}
+                  onClick={() => setActiveMenuIndex(index)}
+                  className="px-6 py-3 text-base font-medium whitespace-nowrap transition-colors text-black"
+                >
+                  {menu.name}
+                </button>
+              ))}
+            </div>
+            {/* Thin transparent black bar underneath entire tab bar */}
+            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-black opacity-20"></div>
+            {/* Active tab indicator - darker bar */}
+            <div
+              className="absolute bottom-0 h-0.5 bg-black transition-all duration-300 ease-out"
+              style={{
+                left: `${indicatorStyle.left}px`,
+                width: `${indicatorStyle.width}px`,
+              }}
+            ></div>
           </div>
         </div>
       </header>
