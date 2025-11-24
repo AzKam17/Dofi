@@ -119,9 +119,15 @@ class AuthController extends AbstractController
 
                     $token = new UsernamePasswordToken($user, 'main', $user->getRoles());
                     $this->tokenStorage->setToken($token);
-                    $request->getSession()->set('_security_main', serialize($token));
 
-                    $this->logger->info('User logged in', ['phone_number' => $phoneNumber]);
+                    $session = $request->getSession();
+                    $session->set('_security_main', serialize($token));
+                    $session->save();
+
+                    $this->logger->info('User logged in', [
+                        'phone_number' => $phoneNumber,
+                        'session_id' => $session->getId()
+                    ]);
 
                     return $this->redirectToRoute('app_home');
                 } else {
