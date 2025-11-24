@@ -10,6 +10,14 @@ interface MenuPageProps {
   restaurantId: string
 }
 
+interface MenuData {
+  id: string
+  name: string
+  type: string
+  filePath: string
+  createdAt: string
+}
+
 export function MenuPage({ restaurantId }: MenuPageProps) {
   const [showAddMenu, setShowAddMenu] = React.useState(false)
   const [menuName, setMenuName] = React.useState("")
@@ -17,6 +25,27 @@ export function MenuPage({ restaurantId }: MenuPageProps) {
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null)
   const [isLoading, setIsLoading] = React.useState(false)
   const [error, setError] = React.useState("")
+  const [menus, setMenus] = React.useState<MenuData[]>([])
+  const [isLoadingMenus, setIsLoadingMenus] = React.useState(true)
+
+  React.useEffect(() => {
+    fetchMenus()
+  }, [])
+
+  const fetchMenus = async () => {
+    try {
+      const response = await fetch("/menu/list")
+      const data = await response.json()
+
+      if (data.success) {
+        setMenus(data.menus)
+      }
+    } catch (err) {
+      console.error("Failed to fetch menus", err)
+    } finally {
+      setIsLoadingMenus(false)
+    }
+  }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -48,7 +77,7 @@ export function MenuPage({ restaurantId }: MenuPageProps) {
         setShowAddMenu(false)
         setMenuName("")
         setSelectedFile(null)
-        window.location.reload()
+        await fetchMenus()
       } else {
         setError(data.message || "Une erreur est survenue")
       }
@@ -190,7 +219,11 @@ export function MenuPage({ restaurantId }: MenuPageProps) {
           </Card>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {isLoadingMenus ? (
+          <div className="text-center py-12">
+            <p className="text-gray-600">Chargement des menus...</p>
+          </div>
+        ) : menus.length === 0 ? (
           <Card>
             <CardContent className="pt-6">
               <p className="text-gray-600 text-center">
@@ -198,7 +231,42 @@ export function MenuPage({ restaurantId }: MenuPageProps) {
               </p>
             </CardContent>
           </Card>
-        </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {menus.map((menu) => (
+              <Card key={menu.id}>
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-black flex items-center justify-center rounded-lg">
+                      {menu.type === "pdf" ? (
+                        <FileText className="w-6 h-6 text-white" />
+                      ) : (
+                        <ImageIcon className="w-6 h-6 text-white" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <CardTitle className="text-lg font-bold text-black">
+                        {menu.name}
+                      </CardTitle>
+                      <p className="text-sm text-gray-600 capitalize">
+                        {menu.type}
+                      </p>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <Button
+                    onClick={() => window.open(`/uploads/${menu.filePath}`, '_blank')}
+                    variant="outline"
+                    className="w-full border-gray-300 text-black hover:bg-gray-100 rounded-lg"
+                  >
+                    Voir le menu
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </AppLayout>
   )
