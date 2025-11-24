@@ -4,18 +4,24 @@ namespace App\Entity;
 
 use App\Repository\RestaurantRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Types\UuidType;
+use Symfony\Component\Uid\Uuid;
+use Symfony\Component\String\Slugger\AsciiSlugger;
 
 #[ORM\Entity(repositoryClass: RestaurantRepository::class)]
 #[ORM\Table(name: 'restaurant')]
+#[ORM\HasLifecycleCallbacks]
 class Restaurant
 {
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
+    #[ORM\Column(type: UuidType::NAME)]
+    private ?Uuid $id = null;
 
     #[ORM\Column(length: 255)]
     private ?string $name = null;
+
+    #[ORM\Column(length: 255, unique: true)]
+    private ?string $slug = null;
 
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt = null;
@@ -25,10 +31,11 @@ class Restaurant
 
     public function __construct()
     {
+        $this->id = Uuid::v4();
         $this->createdAt = new \DateTimeImmutable();
     }
 
-    public function getId(): ?int
+    public function getId(): ?Uuid
     {
         return $this->id;
     }
@@ -41,6 +48,18 @@ class Restaurant
     public function setName(string $name): static
     {
         $this->name = $name;
+
+        return $this;
+    }
+
+    public function getSlug(): ?string
+    {
+        return $this->slug;
+    }
+
+    public function setSlug(string $slug): static
+    {
+        $this->slug = $slug;
 
         return $this;
     }
@@ -75,5 +94,14 @@ class Restaurant
         $this->owner = $owner;
 
         return $this;
+    }
+
+    #[ORM\PrePersist]
+    public function generateSlug(): void
+    {
+        if ($this->name && !$this->slug) {
+            $slugger = new AsciiSlugger();
+            $this->slug = $slugger->slug($this->name)->lower()->toString();
+        }
     }
 }

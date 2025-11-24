@@ -10,3 +10,5 @@
 10. For cards, use rounded borders with radius of 8px
 11. Add a light border color like a shade of grey for card borders
 12. Use a sans-serif font like Arial or Helvetica for all text
+13. In each commit start with a label like "feat:", "fix:", "docs:", "style:", "refactor:", "test:", or "chore:"
+14. Limit commit messages to 80 characters in the subject line
