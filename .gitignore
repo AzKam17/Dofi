@@ -1,0 +1,27 @@
+# macOS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Claude
+.claude/
+
+# Node modules
+app/node_modules/
+
+# Build artifacts
+app/public/build/
+app/var/
+app/vendor/
+
+# Environment files
+app/.env.local
+app/.env.*.local
+
+# Logs
+*.log
+app/var/log/
