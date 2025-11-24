@@ -1,4 +1,5 @@
 import * as React from "react"
+import { PdfViewer } from "./PdfViewer"
 
 interface MenuViewerProps {
   type: "pdf" | "image"
@@ -8,15 +9,7 @@ interface MenuViewerProps {
 
 export function MenuViewer({ type, filePath, name }: MenuViewerProps) {
   if (type === "pdf") {
-    return (
-      <div className="w-full h-screen">
-        <iframe
-          src={`/uploads/${filePath}`}
-          className="w-full h-full border-0"
-          title={name}
-        />
-      </div>
-    )
+    return <PdfViewer filePath={filePath} name={name} />
   }
 
   if (type === "image") {

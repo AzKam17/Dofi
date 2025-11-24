@@ -8,8 +8,10 @@
         "build": "encore production --progress"
     },
     "dependencies": {
+        "pdfjs-dist": "^5.4.394",
         "react": "^19.2.0",
-        "react-dom": "^19.2.0"
+        "react-dom": "^19.2.0",
+        "react-pdf": "^10.2.0"
     },
     "devDependencies": {
         "@babel/core": "^7.17.0",
