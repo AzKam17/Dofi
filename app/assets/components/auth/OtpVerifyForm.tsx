@@ -26,7 +26,6 @@ export function OtpVerifyForm({ error, phoneNumber, expiresIn }: OtpVerifyFormPr
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     setIsLoading(true)
-    // Form will be submitted normally to Symfony
   }
 
   const handleOtpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -38,35 +37,32 @@ export function OtpVerifyForm({ error, phoneNumber, expiresIn }: OtpVerifyFormPr
   const seconds = timeLeft % 60
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-white to-blue-50 p-4">
-      <Card className="w-full max-w-md shadow-xl">
-        <CardHeader className="space-y-3 text-center">
-          <div className="mx-auto w-16 h-16 bg-gradient-to-br from-green-500 to-blue-600 rounded-full flex items-center justify-center">
+    <div className="min-h-screen flex items-center justify-center bg-white p-4">
+      <Card className="w-full max-w-md border-2 border-black">
+        <CardHeader className="space-y-3 text-center border-b-2 border-black">
+          <div className="mx-auto w-16 h-16 bg-black flex items-center justify-center">
             <Shield className="w-8 h-8 text-white" />
           </div>
-          <CardTitle className="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-            Verify OTP
+          <CardTitle className="text-3xl font-bold text-black">
+            Vérification OTP
           </CardTitle>
-          <CardDescription className="text-base">
-            We sent a 6-digit code to
-            <div className="font-semibold text-foreground mt-1">{phoneNumber}</div>
+          <CardDescription className="text-base text-black">
+            Nous avons envoyé un code à 6 chiffres au
+            <div className="font-semibold text-black mt-1">{phoneNumber}</div>
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <form method="post" onSubmit={handleSubmit}>
             {error && (
-              <div className="mb-4 p-4 rounded-lg bg-red-50 border border-red-200 text-red-800 text-sm flex items-start gap-2">
-                <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                </svg>
+              <div className="mb-4 p-4 border-2 border-black bg-white text-black text-sm">
                 <span>{error}</span>
               </div>
             )}
 
             <div className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="otp_code" className="text-sm font-medium">
-                  Verification Code
+                <Label htmlFor="otp_code" className="text-sm font-medium text-black">
+                  Code de vérification
                 </Label>
                 <Input
                   id="otp_code"
@@ -79,19 +75,19 @@ export function OtpVerifyForm({ error, phoneNumber, expiresIn }: OtpVerifyFormPr
                   maxLength={6}
                   required
                   autoFocus
-                  className="text-center text-3xl font-bold tracking-[0.5em] h-16"
+                  className="text-center text-3xl font-bold tracking-[0.5em] h-16 border-2 border-black"
                   style={{ letterSpacing: "0.5em" }}
                 />
                 <div className="flex items-center justify-center gap-2 text-sm">
                   {timeLeft > 0 ? (
-                    <p className="text-muted-foreground">
-                      Code expires in{" "}
-                      <span className="font-semibold text-foreground">
+                    <p className="text-black">
+                      Le code expire dans{" "}
+                      <span className="font-semibold text-black">
                         {minutes}:{seconds.toString().padStart(2, "0")}
                       </span>
                     </p>
                   ) : (
-                    <p className="text-red-600 font-semibold">Code expired</p>
+                    <p className="text-black font-semibold">Code expiré</p>
                   )}
                 </div>
               </div>
@@ -99,7 +95,7 @@ export function OtpVerifyForm({ error, phoneNumber, expiresIn }: OtpVerifyFormPr
               <div className="space-y-3">
                 <Button
                   type="submit"
-                  className="w-full h-12 text-base font-semibold bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 transition-all"
+                  className="w-full h-12 text-base font-semibold bg-black text-white hover:bg-gray-800 border-2 border-black"
                   disabled={isLoading || otp.length !== 6}
                 >
                   {isLoading ? (
@@ -108,12 +104,12 @@ export function OtpVerifyForm({ error, phoneNumber, expiresIn }: OtpVerifyFormPr
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      Verifying...
+                      Vérification en cours...
                     </>
                   ) : (
                     <>
                       <CheckCircle2 className="w-5 h-5 mr-2" />
-                      Verify & Login
+                      Vérifier et se connecter
                     </>
                   )}
                 </Button>
@@ -122,10 +118,10 @@ export function OtpVerifyForm({ error, phoneNumber, expiresIn }: OtpVerifyFormPr
                   <Button
                     type="button"
                     variant="outline"
-                    className="w-full h-12 text-base"
+                    className="w-full h-12 text-base border-2 border-black text-black hover:bg-gray-100"
                   >
                     <ArrowLeft className="w-5 h-5 mr-2" />
-                    Back to Login
+                    Retour à la connexion
                   </Button>
                 </a>
               </div>
