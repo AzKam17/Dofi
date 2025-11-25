@@ -4,24 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Plus, FileText, Image as ImageIcon, X, Eye, Edit2, GripVertical } from "lucide-react"
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-} from '@dnd-kit/core'
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
+import { Plus, FileText, Image as ImageIcon, X, Eye, Edit2, ChevronUp, ChevronDown } from "lucide-react"
 
 interface MenuPageProps {
   restaurantId: string
@@ -43,74 +26,6 @@ interface EditMenuData {
   file?: File | null
 }
 
-function SortableMenuItem({ menu, onEdit, onPreview }: { menu: MenuData; onEdit: (menu: MenuData) => void; onPreview: () => void }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: menu.id })
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  }
-
-  return (
-    <div ref={setNodeRef} style={style} className={isDragging ? 'z-50' : ''}>
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <button
-              className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600"
-              {...attributes}
-              {...listeners}
-            >
-              <GripVertical className="w-5 h-5" />
-            </button>
-            <div className="w-12 h-12 bg-black flex items-center justify-center rounded-lg">
-              {menu.type === "pdf" ? (
-                <FileText className="w-6 h-6 text-white" />
-              ) : (
-                <ImageIcon className="w-6 h-6 text-white" />
-              )}
-            </div>
-            <div className="flex-1">
-              <CardTitle className="text-lg font-bold text-black">
-                {menu.name}
-              </CardTitle>
-              <p className="text-sm text-gray-600 capitalize">
-                {menu.type}
-              </p>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <Button
-            onClick={onPreview}
-            variant="outline"
-            className="w-full border-gray-300 text-black hover:bg-gray-100 rounded-lg"
-          >
-            <Eye className="w-4 h-4 mr-2" />
-            Prévisualiser
-          </Button>
-          <Button
-            onClick={() => onEdit(menu)}
-            variant="outline"
-            className="w-full border-gray-300 text-black hover:bg-gray-100 rounded-lg"
-          >
-            <Edit2 className="w-4 h-4 mr-2" />
-            Modifier
-          </Button>
-        </CardContent>
-      </Card>
-    </div>
-  )
-}
-
 export function MenuPage({ restaurantId, restaurantSlug }: MenuPageProps) {
   const [showAddMenu, setShowAddMenu] = React.useState(false)
   const [showEditMenu, setShowEditMenu] = React.useState(false)
@@ -122,13 +37,6 @@ export function MenuPage({ restaurantId, restaurantSlug }: MenuPageProps) {
   const [error, setError] = React.useState("")
   const [menus, setMenus] = React.useState<MenuData[]>([])
   const [isLoadingMenus, setIsLoadingMenus] = React.useState(true)
-
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  )
 
   React.useEffect(() => {
     fetchMenus()
@@ -230,33 +138,33 @@ export function MenuPage({ restaurantId, restaurantSlug }: MenuPageProps) {
     }
   }
 
-  const handleDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event
+  const moveMenu = async (index: number, direction: 'up' | 'down') => {
+    const newIndex = direction === 'up' ? index - 1 : index + 1
 
-    if (over && active.id !== over.id) {
-      const oldIndex = menus.findIndex((m) => m.id === active.id)
-      const newIndex = menus.findIndex((m) => m.id === over.id)
+    if (newIndex < 0 || newIndex >= menus.length) return
 
-      const newMenus = arrayMove(menus, oldIndex, newIndex)
-      setMenus(newMenus)
+    const newMenus = [...menus]
+    const [movedItem] = newMenus.splice(index, 1)
+    newMenus.splice(newIndex, 0, movedItem)
 
-      try {
-        const orderData = newMenus.map((menu, index) => ({
-          id: menu.id,
-          displayOrder: index,
-        }))
+    setMenus(newMenus)
 
-        await fetch("/menu/reorder", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ menus: orderData }),
-        })
-      } catch (err) {
-        console.error("Failed to update menu order", err)
-        await fetchMenus()
-      }
+    try {
+      const orderData = newMenus.map((menu, idx) => ({
+        id: menu.id,
+        displayOrder: idx,
+      }))
+
+      await fetch("/menu/reorder", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ menus: orderData }),
+      })
+    } catch (err) {
+      console.error("Failed to update menu order", err)
+      await fetchMenus()
     }
   }
 
@@ -505,29 +413,81 @@ export function MenuPage({ restaurantId, restaurantSlug }: MenuPageProps) {
         ) : (
           <>
             <p className="text-sm text-gray-600 mb-4">
-              Glissez-déposez les menus pour réorganiser l'ordre d'affichage
+              Utilisez les flèches pour réorganiser l'ordre d'affichage
             </p>
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext
-                items={menus.map((m) => m.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {menus.map((menu) => (
-                    <SortableMenuItem
-                      key={menu.id}
-                      menu={menu}
-                      onEdit={handleEdit}
-                      onPreview={handlePreview}
-                    />
-                  ))}
+            <div className="bg-white rounded-lg border border-gray-200">
+              {menus.map((menu, index) => (
+                <div
+                  key={menu.id}
+                  className="flex items-center gap-4 px-4 py-3 border-b border-gray-200 last:border-b-0 hover:bg-gray-50"
+                >
+                  <div className="flex flex-col gap-1">
+                    <button
+                      onClick={() => moveMenu(index, 'up')}
+                      disabled={index === 0}
+                      className={`p-1 rounded ${
+                        index === 0
+                          ? 'text-gray-300 cursor-not-allowed'
+                          : 'text-gray-600 hover:text-black hover:bg-gray-200'
+                      }`}
+                      title="Monter"
+                    >
+                      <ChevronUp className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => moveMenu(index, 'down')}
+                      disabled={index === menus.length - 1}
+                      className={`p-1 rounded ${
+                        index === menus.length - 1
+                          ? 'text-gray-300 cursor-not-allowed'
+                          : 'text-gray-600 hover:text-black hover:bg-gray-200'
+                      }`}
+                      title="Descendre"
+                    >
+                      <ChevronDown className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <div className="w-10 h-10 bg-black flex items-center justify-center rounded-lg flex-shrink-0">
+                    {menu.type === "pdf" ? (
+                      <FileText className="w-5 h-5 text-white" />
+                    ) : (
+                      <ImageIcon className="w-5 h-5 text-white" />
+                    )}
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-base font-semibold text-black truncate">
+                      {menu.name}
+                    </h3>
+                    <p className="text-sm text-gray-600 capitalize">
+                      {menu.type}
+                    </p>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handlePreview}
+                      variant="outline"
+                      size="sm"
+                      className="border-gray-300 text-black hover:bg-gray-100"
+                    >
+                      <Eye className="w-4 h-4 mr-1" />
+                      Prévisualiser
+                    </Button>
+                    <Button
+                      onClick={() => handleEdit(menu)}
+                      variant="outline"
+                      size="sm"
+                      className="border-gray-300 text-black hover:bg-gray-100"
+                    >
+                      <Edit2 className="w-4 h-4 mr-1" />
+                      Modifier
+                    </Button>
+                  </div>
                 </div>
-              </SortableContext>
-            </DndContext>
+              ))}
+            </div>
           </>
         )}
       </div>
