@@ -33,6 +33,9 @@ class Menu
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $updatedAt = null;
 
+    #[ORM\Column(type: 'integer', options: ['default' => 0])]
+    private int $displayOrder = 0;
+
     #[ORM\ManyToOne(targetEntity: Restaurant::class)]
     #[ORM\JoinColumn(name: 'restaurant_id', referencedColumnName: 'id', nullable: false)]
     private ?Restaurant $restaurant = null;
@@ -128,6 +131,18 @@ class Menu
     public function setRestaurant(?Restaurant $restaurant): static
     {
         $this->restaurant = $restaurant;
+
+        return $this;
+    }
+
+    public function getDisplayOrder(): int
+    {
+        return $this->displayOrder;
+    }
+
+    public function setDisplayOrder(int $displayOrder): static
+    {
+        $this->displayOrder = $displayOrder;
 
         return $this;
     }

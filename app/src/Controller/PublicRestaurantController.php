@@ -28,7 +28,7 @@ class PublicRestaurantController extends AbstractController
 
         $menus = $this->entityManager
             ->getRepository(Menu::class)
-            ->findBy(['restaurant' => $restaurant], ['createdAt' => 'DESC']);
+            ->findBy(['restaurant' => $restaurant], ['displayOrder' => 'ASC']);
 
         return $this->render('public/restaurant.html.twig', [
             'restaurant' => $restaurant,

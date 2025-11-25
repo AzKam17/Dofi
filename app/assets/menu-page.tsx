@@ -7,7 +7,8 @@ const rootElement = document.getElementById("menu-root")
 
 if (rootElement) {
   const restaurantId = rootElement.dataset.restaurantId || ""
+  const restaurantSlug = rootElement.dataset.restaurantSlug || ""
 
   const root = createRoot(rootElement)
-  root.render(<MenuPage restaurantId={restaurantId} />)
+  root.render(<MenuPage restaurantId={restaurantId} restaurantSlug={restaurantSlug} />)
 }

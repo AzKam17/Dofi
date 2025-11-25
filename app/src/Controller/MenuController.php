@@ -163,6 +163,7 @@ class MenuController extends AbstractController
                 'type' => $menu->getType(),
                 'filePath' => $menu->getFilePath(),
                 'createdAt' => $menu->getCreatedAt()->format('Y-m-d H:i:s'),
+                'displayOrder' => $menu->getDisplayOrder(),
             ];
         }, $menus);
 
@@ -170,5 +171,166 @@ class MenuController extends AbstractController
             'success' => true,
             'menus' => $menuData
         ]);
+    }
+
+    #[Route('/update/{id}', name: 'menu_update', methods: ['POST'])]
+    public function update(string $id, Request $request): Response
+    {
+        $user = $this->getUser();
+
+        if (!$user) {
+            return $this->json(['success' => false, 'message' => 'Non authentifié'], 401);
+        }
+
+        $restaurant = $user->getRestaurant();
+        if (!$restaurant) {
+            return $this->json(['success' => false, 'message' => 'Restaurant non trouvé'], 404);
+        }
+
+        $menu = $this->entityManager
+            ->getRepository(Menu::class)
+            ->findOneBy(['id' => $id, 'restaurant' => $restaurant]);
+
+        if (!$menu) {
+            return $this->json(['success' => false, 'message' => 'Menu non trouvé'], 404);
+        }
+
+        $name = $request->request->get('name');
+        $file = $request->files->get('file');
+
+        if (!$name) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Le nom est requis'
+            ], 400);
+        }
+
+        try {
+            $menu->setName($name);
+
+            if ($file) {
+                $type = $menu->getType();
+
+                if ($type === 'pdf' && $file->getMimeType() !== 'application/pdf') {
+                    return $this->json([
+                        'success' => false,
+                        'message' => 'Le fichier doit être un PDF'
+                    ], 400);
+                }
+
+                if ($type === 'image' && !str_starts_with($file->getMimeType(), 'image/')) {
+                    return $this->json([
+                        'success' => false,
+                        'message' => 'Le fichier doit être une image'
+                    ], 400);
+                }
+
+                $oldFilePath = $this->uploadsDirectory . '/' . $menu->getFilePath();
+                if (file_exists($oldFilePath)) {
+                    unlink($oldFilePath);
+                }
+
+                $originalFilename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+                $safeFilename = $this->slugger->slug($originalFilename);
+                $extension = $file->guessExtension();
+                $newFilename = $safeFilename . '-' . uniqid() . '.' . $extension;
+
+                $restaurantDir = $this->uploadsDirectory . '/menus/' . $restaurant->getId();
+                if (!is_dir($restaurantDir)) {
+                    mkdir($restaurantDir, 0755, true);
+                }
+
+                $file->move($restaurantDir, $newFilename);
+                $menu->setFilePath('menus/' . $restaurant->getId() . '/' . $newFilename);
+            }
+
+            $this->entityManager->flush();
+
+            $this->logger->info('Menu updated', [
+                'menu_id' => $menu->getId(),
+                'restaurant_id' => $restaurant->getId(),
+            ]);
+
+            return $this->json([
+                'success' => true,
+                'message' => 'Menu modifié avec succès',
+            ]);
+        } catch (FileException $e) {
+            $this->logger->error('File upload failed', [
+                'error' => $e->getMessage()
+            ]);
+
+            return $this->json([
+                'success' => false,
+                'message' => 'Erreur lors de l\'upload du fichier'
+            ], 500);
+        } catch (\Exception $e) {
+            $this->logger->error('Menu update failed', [
+                'error' => $e->getMessage()
+            ]);
+
+            return $this->json([
+                'success' => false,
+                'message' => 'Erreur lors de la modification du menu'
+            ], 500);
+        }
+    }
+
+    #[Route('/reorder', name: 'menu_reorder', methods: ['POST'])]
+    public function reorder(Request $request): Response
+    {
+        $user = $this->getUser();
+
+        if (!$user) {
+            return $this->json(['success' => false, 'message' => 'Non authentifié'], 401);
+        }
+
+        $restaurant = $user->getRestaurant();
+        if (!$restaurant) {
+            return $this->json(['success' => false, 'message' => 'Restaurant non trouvé'], 404);
+        }
+
+        $data = json_decode($request->getContent(), true);
+        $menus = $data['menus'] ?? [];
+
+        if (empty($menus)) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Aucun menu fourni'
+            ], 400);
+        }
+
+        try {
+            foreach ($menus as $menuData) {
+                $menu = $this->entityManager
+                    ->getRepository(Menu::class)
+                    ->findOneBy(['id' => $menuData['id'], 'restaurant' => $restaurant]);
+
+                if ($menu) {
+                    $menu->setDisplayOrder($menuData['displayOrder']);
+                }
+            }
+
+            $this->entityManager->flush();
+
+            $this->logger->info('Menu order updated', [
+                'restaurant_id' => $restaurant->getId(),
+                'count' => count($menus),
+            ]);
+
+            return $this->json([
+                'success' => true,
+                'message' => 'Ordre des menus mis à jour',
+            ]);
+        } catch (\Exception $e) {
+            $this->logger->error('Menu reorder failed', [
+                'error' => $e->getMessage()
+            ]);
+
+            return $this->json([
+                'success' => false,
+                'message' => 'Erreur lors de la réorganisation des menus'
+            ], 500);
+        }
     }
 }
