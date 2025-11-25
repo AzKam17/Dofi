@@ -1,15 +1,16 @@
 import * as React from "react"
-import { Home, Menu } from "lucide-react"
+import { Home, Menu, Settings } from "lucide-react"
 
 interface AppLayoutProps {
   children: React.ReactNode
-  currentPage: "accueil" | "menu"
+  currentPage: "accueil" | "menu" | "settings"
 }
 
 export function AppLayout({ children, currentPage }: AppLayoutProps) {
   const navigation = [
     { name: "Accueil", href: "/", icon: Home, key: "accueil" },
     { name: "Menu", href: "/menu", icon: Menu, key: "menu" },
+    { name: "Paramètres", href: "/settings", icon: Settings, key: "settings" },
   ]
 
   return (

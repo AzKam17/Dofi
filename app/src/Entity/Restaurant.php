@@ -23,8 +23,20 @@ class Restaurant
     #[ORM\Column(length: 255, unique: true)]
     private ?string $slug = null;
 
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $description = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $photoPath = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $backgroundPhotoPath = null;
+
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $updatedAt = null;
 
     #[ORM\OneToOne(mappedBy: 'restaurant', targetEntity: User::class)]
     private ?User $owner = null;
@@ -96,6 +108,54 @@ class Restaurant
         return $this;
     }
 
+    public function getDescription(): ?string
+    {
+        return $this->description;
+    }
+
+    public function setDescription(?string $description): static
+    {
+        $this->description = $description;
+
+        return $this;
+    }
+
+    public function getPhotoPath(): ?string
+    {
+        return $this->photoPath;
+    }
+
+    public function setPhotoPath(?string $photoPath): static
+    {
+        $this->photoPath = $photoPath;
+
+        return $this;
+    }
+
+    public function getBackgroundPhotoPath(): ?string
+    {
+        return $this->backgroundPhotoPath;
+    }
+
+    public function setBackgroundPhotoPath(?string $backgroundPhotoPath): static
+    {
+        $this->backgroundPhotoPath = $backgroundPhotoPath;
+
+        return $this;
+    }
+
+    public function getUpdatedAt(): ?\DateTimeImmutable
+    {
+        return $this->updatedAt;
+    }
+
+    public function setUpdatedAt(?\DateTimeImmutable $updatedAt): static
+    {
+        $this->updatedAt = $updatedAt;
+
+        return $this;
+    }
+
     #[ORM\PrePersist]
     public function generateSlug(): void
     {
@@ -103,5 +163,11 @@ class Restaurant
             $slugger = new AsciiSlugger();
             $this->slug = $slugger->slug($this->name)->lower()->toString();
         }
+    }
+
+    #[ORM\PreUpdate]
+    public function updateTimestamp(): void
+    {
+        $this->updatedAt = new \DateTimeImmutable();
     }
 }

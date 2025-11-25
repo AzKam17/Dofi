@@ -37,6 +37,7 @@ security:
         - { path: ^/restaurant/, roles: PUBLIC_ACCESS }
         - { path: ^/uploads/, roles: PUBLIC_ACCESS }
         - { path: ^/home, roles: ROLE_USER }
+        - { path: ^/settings, roles: ROLE_USER }
 
 when@test:
     security:

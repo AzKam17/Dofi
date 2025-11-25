@@ -30,3 +30,7 @@ services:
     App\Controller\MenuController:
         arguments:
             $uploadsDirectory: '%uploads_directory%'
+
+    App\Controller\SettingsController:
+        arguments:
+            $uploadsDirectory: '%uploads_directory%'
