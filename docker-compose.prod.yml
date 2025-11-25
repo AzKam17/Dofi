@@ -10,7 +10,7 @@ services:
         image: 'postgres:11-alpine'
         working_dir: /app
         volumes:
-            - './app:/app'
+        - 'dofi_db:/var/lib/postgresql/data:rw'
         environment:
             - POSTGRES_USER=redoc_azk
             - POSTGRES_PASSWORD=Aziz007td
@@ -32,3 +32,5 @@ services:
             - './app:/app'
             - './phpdocker/php-fpm/php-ini-overrides.ini:/etc/php/8.4/fpm/conf.d/99-overrides.ini'
             - './phpdocker/php-fpm/php-ini-overrides.ini:/etc/php/8.4/cli/conf.d/99-overrides.ini'
+volumes:
+  dofi_db:
