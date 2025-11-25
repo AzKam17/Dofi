@@ -12,3 +12,4 @@
 12. Use a sans-serif font like Arial or Helvetica for all text
 13. In each commit start with a label like "feat:", "fix:", "docs:", "style:", "refactor:", "test:", or "chore:"
 14. Limit commit messages to 80 characters in the subject line
+15. Run php commands in the php-fpm container

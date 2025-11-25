@@ -1,0 +1,18 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}QR Codes{% endblock %}
+
+{% block stylesheets %}
+    {{ encore_entry_link_tags('qr-codes') }}
+{% endblock %}
+
+{% block javascripts %}
+    {{ encore_entry_script_tags('qr-codes') }}
+{% endblock %}
+
+{% block body %}
+<div
+    id="qr-codes-root"
+    data-qr-codes="{{ qrCodes|json_encode|e('html_attr') }}"
+></div>
+{% endblock %}

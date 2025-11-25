@@ -20,22 +20,24 @@ export function AccueilPage({ userName, restaurantName }: AccueilPageProps) {
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-black flex items-center justify-center rounded-lg">
-                  <Store className="w-6 h-6 text-white" />
+          <a href="/qr-codes" className="block transition-transform hover:scale-105">
+            <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-black flex items-center justify-center rounded-lg">
+                    <Store className="w-6 h-6 text-white" />
+                  </div>
+                  <CardTitle className="text-lg font-bold text-black">
+                    Restaurant
+                  </CardTitle>
                 </div>
-                <CardTitle className="text-lg font-bold text-black">
-                  Restaurant
-                </CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold text-black">{restaurantName}</p>
-              <p className="text-sm text-gray-600 mt-2">Votre établissement</p>
-            </CardContent>
-          </Card>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold text-black">{restaurantName}</p>
+                <p className="text-sm text-gray-600 mt-2">Cliquez pour voir vos QR codes</p>
+              </CardContent>
+            </Card>
+          </a>
         </div>
       </div>
     </AppLayout>
