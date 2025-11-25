@@ -29,6 +29,7 @@ Encore
     .addEntry('restaurant-public', './assets/restaurant-public.tsx')
     .addEntry('settings', './assets/settings.tsx')
     .addEntry('qr-codes', './assets/qr-codes.tsx')
+    .addEntry('notifications-page', './assets/notifications-page.tsx')
 
     // When enabled, Webpack "splits" your files into smaller pieces for greater optimization.
     .splitEntryChunks()

@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Home, Menu, Settings } from "lucide-react"
+import { Home, Menu, Settings, Bell } from "lucide-react"
 
 interface AppLayoutProps {
   children: React.ReactNode
@@ -7,6 +7,24 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ children, currentPage }: AppLayoutProps) {
+  const [unreadCount, setUnreadCount] = React.useState(0)
+
+  React.useEffect(() => {
+    const fetchUnreadCount = async () => {
+      try {
+        const response = await fetch("/notifications/count")
+        const data = await response.json()
+        setUnreadCount(data.count)
+      } catch (error) {
+        console.error("Failed to fetch unread count:", error)
+      }
+    }
+
+    fetchUnreadCount()
+    const interval = setInterval(fetchUnreadCount, 30000)
+    return () => clearInterval(interval)
+  }, [])
+
   const navigation = [
     { name: "Accueil", href: "/", icon: Home, key: "accueil" },
     { name: "Menu", href: "/menu", icon: Menu, key: "menu" },
@@ -18,8 +36,16 @@ export function AppLayout({ children, currentPage }: AppLayoutProps) {
       {/* Desktop Sidebar */}
       <div className="hidden md:fixed md:inset-y-0 md:flex md:w-64 md:flex-col">
         <div className="flex flex-col flex-grow border-r border-gray-300 bg-white">
-          <div className="flex items-center flex-shrink-0 px-6 py-6">
+          <div className="flex items-center justify-between flex-shrink-0 px-6 py-6">
             <h1 className="text-2xl font-bold text-black">Dofi</h1>
+            <a href="/notifications" className="relative">
+              <Bell className="w-6 h-6 text-black hover:text-gray-600" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
+            </a>
           </div>
           <nav className="flex-1 px-4 space-y-1">
             {navigation.map((item) => {
@@ -45,6 +71,19 @@ export function AppLayout({ children, currentPage }: AppLayoutProps) {
 
       {/* Main content */}
       <div className="md:pl-64 flex flex-col flex-1">
+        {/* Mobile Header with Bell Icon */}
+        <div className="md:hidden sticky top-0 z-10 bg-white border-b border-gray-300 px-4 py-3 flex items-center justify-between">
+          <h1 className="text-xl font-bold text-black">Dofi</h1>
+          <a href="/notifications" className="relative">
+            <Bell className="w-6 h-6 text-black" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
+          </a>
+        </div>
+
         <main className="flex-1 pb-20 md:pb-0">
           <div className="py-6 px-4 sm:px-6 lg:px-8">
             {children}
