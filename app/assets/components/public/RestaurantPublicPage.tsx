@@ -10,6 +10,7 @@ interface MenuData {
 
 interface RestaurantPublicPageProps {
   restaurantName: string
+  restaurantDescription: string | null
   restaurantPhoto: string | null
   restaurantBackground: string | null
   menus: MenuData[]
@@ -17,6 +18,7 @@ interface RestaurantPublicPageProps {
 
 export function RestaurantPublicPage({
   restaurantName,
+  restaurantDescription,
   restaurantPhoto,
   restaurantBackground,
   menus
@@ -66,6 +68,9 @@ export function RestaurantPublicPage({
           </div>
           <div className="max-w-7xl mx-auto px-4 py-6">
             <h1 className="text-3xl font-bold text-black">{restaurantName}</h1>
+            {restaurantDescription && (
+              <p className="text-gray-600 mt-2">{restaurantDescription}</p>
+            )}
           </div>
         </header>
         <div className="max-w-7xl mx-auto px-4 py-12">
@@ -105,10 +110,13 @@ export function RestaurantPublicPage({
         </div>
       </div>
 
-      {/* Restaurant name - scrollable */}
+      {/* Restaurant name and description - scrollable */}
       <div className="bg-white">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <h1 className="text-2xl font-bold text-black">{restaurantName}</h1>
+          {restaurantDescription && (
+            <p className="text-gray-600 mt-2">{restaurantDescription}</p>
+          )}
         </div>
       </div>
 

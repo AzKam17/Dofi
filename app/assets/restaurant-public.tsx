@@ -7,6 +7,7 @@ const rootElement = document.getElementById("restaurant-public-root")
 
 if (rootElement) {
   const restaurantName = rootElement.dataset.restaurantName || ""
+  const restaurantDescription = rootElement.dataset.restaurantDescription || null
   const restaurantPhoto = rootElement.dataset.restaurantPhoto || null
   const restaurantBackground = rootElement.dataset.restaurantBackground || null
   const menusData = rootElement.dataset.menus || "[]"
@@ -16,6 +17,7 @@ if (rootElement) {
   root.render(
     <RestaurantPublicPage
       restaurantName={restaurantName}
+      restaurantDescription={restaurantDescription}
       restaurantPhoto={restaurantPhoto}
       restaurantBackground={restaurantBackground}
       menus={menus}
