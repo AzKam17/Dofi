@@ -57,22 +57,27 @@ export function RestaurantPublicPage({ restaurantName, menus }: RestaurantPublic
 
   return (
     <div className="min-h-screen bg-white font-sans">
-      <header className="bg-white sticky top-0 z-10">
-        {/* Header with background and logo placeholder */}
-        <div className="relative h-32 bg-gray-200 w-full">
-          {/* Background image placeholder */}
-          <div className="absolute inset-0 flex items-center">
-            <div className="ml-6">
-              {/* Logo placeholder - square, vertically centered */}
-              <div className="w-20 h-20 bg-gray-400 rounded-lg"></div>
-            </div>
+      {/* Header with background and logo placeholder */}
+      <div className="relative h-32 bg-gray-200 w-full">
+        {/* Background image placeholder */}
+        <div className="absolute inset-0 flex items-center">
+          <div className="ml-6">
+            {/* Logo placeholder - square, vertically centered */}
+            <div className="w-20 h-20 bg-gray-400 rounded-lg"></div>
           </div>
         </div>
+      </div>
 
+      {/* Restaurant name - scrollable */}
+      <div className="bg-white">
         <div className="max-w-7xl mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold text-black mb-4">{restaurantName}</h1>
+          <h1 className="text-2xl font-bold text-black">{restaurantName}</h1>
+        </div>
+      </div>
 
-          {/* Tab Menu with underline indicator */}
+      {/* Tab Menu - sticky */}
+      <div className="bg-white sticky top-0 z-10 border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4">
           <div className="relative">
             <div className="flex overflow-x-auto">
               {menus.map((menu, index) => (
@@ -100,7 +105,7 @@ export function RestaurantPublicPage({ restaurantName, menus }: RestaurantPublic
             ></div>
           </div>
         </div>
-      </header>
+      </div>
 
       <main>
         {menus[activeMenuIndex] && (
