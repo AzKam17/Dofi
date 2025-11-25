@@ -37,7 +37,7 @@ export function AppLayout({ children, currentPage }: AppLayoutProps) {
       <div className="hidden md:fixed md:inset-y-0 md:flex md:w-64 md:flex-col">
         <div className="flex flex-col flex-grow border-r border-gray-300 bg-white">
           <div className="flex items-center justify-between flex-shrink-0 px-6 py-6">
-            <h1 className="text-2xl font-bold text-black">Dofi</h1>
+            <h1 className="text-2xl font-bold text-black">Belou</h1>
             <a href="/notifications" className="relative">
               <Bell className="w-6 h-6 text-black hover:text-gray-600" />
               {unreadCount > 0 && (
