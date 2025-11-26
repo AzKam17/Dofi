@@ -34,6 +34,9 @@ class User implements UserInterface
     #[ORM\Column(type: 'boolean')]
     private bool $isVerified = false;
 
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    private bool $isAdmin = false;
+
     #[ORM\OneToOne(inversedBy: 'owner', targetEntity: Restaurant::class, cascade: ['persist', 'remove'])]
     #[ORM\JoinColumn(name: 'restaurant_id', referencedColumnName: 'id', nullable: true)]
     private ?Restaurant $restaurant = null;
@@ -43,6 +46,7 @@ class User implements UserInterface
         $this->createdAt = new \DateTimeImmutable();
         $this->roles = ['ROLE_USER'];
         $this->isVerified = false;
+        $this->isAdmin = false;
     }
 
     public function getId(): ?int
@@ -103,6 +107,10 @@ class User implements UserInterface
         $roles = $this->roles;
         $roles[] = 'ROLE_USER';
 
+        if ($this->isAdmin) {
+            $roles[] = 'ROLE_ADMIN';
+        }
+
         return array_unique($roles);
     }
 
@@ -130,6 +138,18 @@ class User implements UserInterface
     public function setIsVerified(bool $isVerified): static
     {
         $this->isVerified = $isVerified;
+
+        return $this;
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->isAdmin;
+    }
+
+    public function setIsAdmin(bool $isAdmin): static
+    {
+        $this->isAdmin = $isAdmin;
 
         return $this;
     }

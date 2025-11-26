@@ -33,6 +33,10 @@ class AuthController extends AbstractController
     public function login(Request $request): Response
     {
         if ($this->getUser()) {
+            $user = $this->getUser();
+            if ($user instanceof User && $user->isAdmin()) {
+                return $this->redirectToRoute('admin_dashboard');
+            }
             return $this->redirectToRoute('app_home');
         }
 
@@ -85,6 +89,10 @@ class AuthController extends AbstractController
     public function verify(Request $request): Response
     {
         if ($this->getUser()) {
+            $user = $this->getUser();
+            if ($user instanceof User && $user->isAdmin()) {
+                return $this->redirectToRoute('admin_dashboard');
+            }
             return $this->redirectToRoute('app_home');
         }
 
@@ -129,7 +137,12 @@ class AuthController extends AbstractController
                         'session_id' => $session->getId()
                     ]);
 
-                    if (!$user->hasCompletedOnboarding()) {
+                    // Redirect based on user role
+                    if ($user instanceof User && $user->isAdmin()) {
+                        return $this->redirectToRoute('admin_dashboard');
+                    }
+
+                    if ($user instanceof User && !$user->hasCompletedOnboarding()) {
                         return $this->redirectToRoute('onboarding_index');
                     }
 

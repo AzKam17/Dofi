@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Contracts\Cache\CacheInterface;
 
 class OtpService
@@ -10,14 +11,29 @@ class OtpService
     private const OTP_EXPIRY = 600;
     private const OTP_PREFIX = 'otp:';
 
+    private array $testPhoneNumbers;
+
     public function __construct(
         private CacheInterface $cache,
-        private LoggerInterface $logger
-    ) {}
+        private LoggerInterface $logger,
+        private ParameterBagInterface $params
+    ) {
+        $testNumbers = $this->params->get('test_phone_numbers') ?? '';
+        $this->testPhoneNumbers = array_filter(array_map('trim', explode(',', $testNumbers)));
+    }
 
     public function generateOtp(string $phoneNumber): string
     {
-        $otpCode = str_pad((string) random_int(100000, 999999), 6, '0', STR_PAD_LEFT);
+        // Use fixed OTP for test phone numbers
+        if ($this->isTestPhoneNumber($phoneNumber)) {
+            $otpCode = '000000';
+            $this->logger->info('Test OTP generated', [
+                'phone_number' => $phoneNumber,
+                'otp_code' => $otpCode,
+            ]);
+        } else {
+            $otpCode = str_pad((string) random_int(100000, 999999), 6, '0', STR_PAD_LEFT);
+        }
 
         $key = $this->getOtpKey($phoneNumber);
 
@@ -34,6 +50,24 @@ class OtpService
         ]);
 
         return $otpCode;
+    }
+
+    private function isTestPhoneNumber(string $phoneNumber): bool
+    {
+        // Extract only digits for comparison
+        $cleanNumber = preg_replace('/[^0-9]/', '', $phoneNumber);
+
+        foreach ($this->testPhoneNumbers as $testNumber) {
+            $cleanTestNumber = preg_replace('/[^0-9]/', '', $testNumber);
+            // Match last 10 digits
+            if (strlen($cleanNumber) >= 10 && strlen($cleanTestNumber) === 10) {
+                if (substr($cleanNumber, -10) === $cleanTestNumber) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     public function validateOtp(string $phoneNumber, string $code): bool

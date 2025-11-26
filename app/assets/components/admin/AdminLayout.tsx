@@ -1,0 +1,92 @@
+import * as React from "react"
+import { Users, Utensils, QrCode, LayoutDashboard, LogOut } from "lucide-react"
+
+interface AdminLayoutProps {
+  children: React.ReactNode
+  currentPage: "dashboard" | "users" | "restaurants" | "qrcodes"
+}
+
+export function AdminLayout({ children, currentPage }: AdminLayoutProps) {
+  const navigation = [
+    { name: "Tableau de bord", href: "/admin", icon: LayoutDashboard, key: "dashboard" },
+    { name: "Utilisateurs", href: "/admin/users", icon: Users, key: "users" },
+    { name: "Restaurants", href: "/admin/restaurants", icon: Utensils, key: "restaurants" },
+    { name: "QR Codes", href: "/admin/qrcodes", icon: QrCode, key: "qrcodes" },
+  ]
+
+  return (
+    <div className="min-h-screen bg-gray-100 font-sans">
+      {/* Desktop Sidebar */}
+      <div className="hidden md:fixed md:inset-y-0 md:flex md:w-64 md:flex-col">
+        <div className="flex flex-col flex-grow border-r border-gray-300 bg-white">
+          <div className="flex items-center flex-shrink-0 px-6 py-6 border-b border-gray-300">
+            <h1 className="text-2xl font-bold text-black">Admin Panel</h1>
+          </div>
+          <nav className="flex-1 px-4 py-4 space-y-1">
+            {navigation.map((item) => {
+              const isActive = item.key === currentPage
+              return (
+                <a
+                  key={item.key}
+                  href={item.href}
+                  className={`flex items-center px-4 py-3 text-base rounded-lg ${
+                    isActive
+                      ? "bg-black text-white"
+                      : "text-black hover:bg-gray-100"
+                  }`}
+                >
+                  <item.icon className="w-5 h-5 mr-3" />
+                  {item.name}
+                </a>
+              )
+            })}
+          </nav>
+          <div className="p-4 border-t border-gray-300">
+            <a
+              href="/admin/logout"
+              className="flex items-center px-4 py-3 text-base rounded-lg text-black hover:bg-gray-100"
+            >
+              <LogOut className="w-5 h-5 mr-3" />
+              Déconnexion
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {/* Main content */}
+      <div className="md:pl-64 flex flex-col flex-1">
+        {/* Mobile Header */}
+        <div className="md:hidden sticky top-0 z-10 bg-white border-b border-gray-300 px-4 py-3">
+          <h1 className="text-xl font-bold text-black">Admin Panel</h1>
+        </div>
+
+        <main className="flex-1 pb-20 md:pb-0">
+          <div className="py-6 px-4 sm:px-6 lg:px-8">
+            {children}
+          </div>
+        </main>
+      </div>
+
+      {/* Mobile Bottom Navigation */}
+      <div className="fixed inset-x-0 bottom-0 bg-white border-t border-gray-300 md:hidden">
+        <nav className="flex justify-around">
+          {navigation.map((item) => {
+            const isActive = item.key === currentPage
+            return (
+              <a
+                key={item.key}
+                href={item.href}
+                className={`flex flex-col items-center py-3 px-4 flex-1 ${
+                  isActive ? "text-black" : "text-gray-600"
+                }`}
+              >
+                <item.icon className="w-6 h-6 mb-1" />
+                <span className="text-xs font-medium">{item.name}</span>
+              </a>
+            )
+          })}
+        </nav>
+      </div>
+    </div>
+  )
+}

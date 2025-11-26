@@ -1,0 +1,15 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Admin - Tableau de bord{% endblock %}
+
+{% block stylesheets %}
+    {{ encore_entry_link_tags('admin-dashboard') }}
+{% endblock %}
+
+{% block body %}
+    <div id="admin-dashboard-root" data-stats="{{ stats|e('html_attr') }}"></div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ encore_entry_script_tags('admin-dashboard') }}
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Admin - QR Codes{% endblock %}
+
+{% block stylesheets %}
+    {{ encore_entry_link_tags('admin-qrcodes') }}
+{% endblock %}
+
+{% block body %}
+    <div id="admin-qrcodes-root"
+         data-qrcodes="{{ qrCodes|e('html_attr') }}"
+         data-restaurants="{{ restaurants|e('html_attr') }}"
+         data-current-page="{{ currentPage }}"
+         data-total-pages="{{ totalPages }}"
+         data-search="{{ search }}"
+         data-filter="{{ filter }}"
+         data-total="{{ total }}"></div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ encore_entry_script_tags('admin-qrcodes') }}
+{% endblock %}

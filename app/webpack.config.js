@@ -30,6 +30,10 @@ Encore
     .addEntry('settings', './assets/settings.tsx')
     .addEntry('qr-codes', './assets/qr-codes.tsx')
     .addEntry('notifications-page', './assets/notifications-page.tsx')
+    .addEntry('admin-dashboard', './assets/admin-dashboard.tsx')
+    .addEntry('admin-users', './assets/admin-users.tsx')
+    .addEntry('admin-restaurants', './assets/admin-restaurants.tsx')
+    .addEntry('admin-qrcodes', './assets/admin-qrcodes.tsx')
 
     // When enabled, Webpack "splits" your files into smaller pieces for greater optimization.
     .splitEntryChunks()
