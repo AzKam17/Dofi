@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Home, Menu, Settings, Bell } from "lucide-react"
+import { Home, Menu, Settings, Bell, LogOut } from "lucide-react"
 
 interface AppLayoutProps {
   children: React.ReactNode
@@ -66,6 +66,15 @@ export function AppLayout({ children, currentPage }: AppLayoutProps) {
               )
             })}
           </nav>
+          <div className="p-4 border-t border-gray-300">
+            <a
+              href="/logout"
+              className="flex items-center px-4 py-3 text-base rounded-lg text-black hover:bg-gray-100"
+            >
+              <LogOut className="w-5 h-5 mr-3" />
+              Déconnexion
+            </a>
+          </div>
         </div>
       </div>
 

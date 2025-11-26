@@ -1,0 +1,15 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Notifications{% endblock %}
+
+{% block stylesheets %}
+    {{ encore_entry_link_tags('notifications-page') }}
+{% endblock %}
+
+{% block body %}
+    <div id="notifications-root" data-notifications="{{ notifications|e('html_attr') }}"></div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ encore_entry_script_tags('notifications-page') }}
+{% endblock %}
