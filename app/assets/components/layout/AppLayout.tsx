@@ -118,6 +118,13 @@ export function AppLayout({ children, currentPage }: AppLayoutProps) {
               </a>
             )
           })}
+          <a
+            href="/logout"
+            className="flex flex-col items-center py-3 px-6 flex-1 text-gray-600"
+          >
+            <LogOut className="w-6 h-6 mb-1" />
+            <span className="text-xs font-medium">Quitter</span>
+          </a>
         </nav>
       </div>
     </div>
