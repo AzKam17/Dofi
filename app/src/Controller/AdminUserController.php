@@ -26,15 +26,24 @@ class AdminUserController extends AbstractController
         $search = $request->query->get('search', '');
 
         $qb = $this->userRepository->createQueryBuilder('u')
+            ->leftJoin('u.restaurant', 'r')
             ->orderBy('u.createdAt', 'DESC');
 
         if ($search) {
-            $qb->where('u.phoneNumber ILIKE :search OR u.restaurantName ILIKE :search')
+            $qb->where('u.phoneNumber ILIKE :search OR u.firstName ILIKE :search OR u.lastName ILIKE :search OR r.name ILIKE :search')
                 ->setParameter('search', '%' . $search . '%');
         }
 
-        $totalQuery = clone $qb;
-        $total = $totalQuery->select('COUNT(u.id)')->getQuery()->getSingleScalarResult();
+        $countQb = $this->userRepository->createQueryBuilder('u')
+            ->select('COUNT(DISTINCT u.id)');
+
+        if ($search) {
+            $countQb->leftJoin('u.restaurant', 'r')
+                ->where('u.phoneNumber ILIKE :search OR u.firstName ILIKE :search OR u.lastName ILIKE :search OR r.name ILIKE :search')
+                ->setParameter('search', '%' . $search . '%');
+        }
+
+        $total = $countQb->getQuery()->getSingleScalarResult();
         $totalPages = max(1, (int) ceil($total / $perPage));
 
         $users = $qb
@@ -44,10 +53,12 @@ class AdminUserController extends AbstractController
             ->getResult();
 
         $usersData = array_map(function ($user) {
+            $restaurant = $user->getRestaurant();
             return [
                 'id' => $user->getId()->toRfc4122(),
                 'phoneNumber' => $user->getPhoneNumber(),
-                'restaurantName' => $user->getRestaurantName(),
+                'name' => $user->getFirstName() . ' ' . $user->getLastName(),
+                'restaurantName' => $restaurant ? $restaurant->getName() : '-',
                 'createdAt' => $user->getCreatedAt()->format('c'),
             ];
         }, $users);

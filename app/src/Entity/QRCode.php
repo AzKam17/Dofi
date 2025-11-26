@@ -40,10 +40,24 @@ class QRCode
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $deletedAt = null;
 
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $lastScannedAt = null;
+
+    #[ORM\Column(type: 'integer', options: ['default' => 0])]
+    private int $totalScans = 0;
+
+    #[ORM\Column(type: 'integer', options: ['default' => 0])]
+    private int $scansToday = 0;
+
+    #[ORM\Column(type: 'date_immutable', nullable: true)]
+    private ?\DateTimeImmutable $lastScanDate = null;
+
     public function __construct()
     {
         $this->id = Uuid::v4();
         $this->createdAt = new \DateTimeImmutable();
+        $this->totalScans = 0;
+        $this->scansToday = 0;
     }
 
     public function getId(): ?Uuid
@@ -139,5 +153,71 @@ class QRCode
     public function updateTimestamp(): void
     {
         $this->updatedAt = new \DateTimeImmutable();
+    }
+
+    public function getLastScannedAt(): ?\DateTimeImmutable
+    {
+        return $this->lastScannedAt;
+    }
+
+    public function setLastScannedAt(?\DateTimeImmutable $lastScannedAt): static
+    {
+        $this->lastScannedAt = $lastScannedAt;
+
+        return $this;
+    }
+
+    public function getTotalScans(): int
+    {
+        return $this->totalScans;
+    }
+
+    public function setTotalScans(int $totalScans): static
+    {
+        $this->totalScans = $totalScans;
+
+        return $this;
+    }
+
+    public function getScansToday(): int
+    {
+        return $this->scansToday;
+    }
+
+    public function setScansToday(int $scansToday): static
+    {
+        $this->scansToday = $scansToday;
+
+        return $this;
+    }
+
+    public function getLastScanDate(): ?\DateTimeImmutable
+    {
+        return $this->lastScanDate;
+    }
+
+    public function setLastScanDate(?\DateTimeImmutable $lastScanDate): static
+    {
+        $this->lastScanDate = $lastScanDate;
+
+        return $this;
+    }
+
+    public function incrementScans(): void
+    {
+        $now = new \DateTimeImmutable();
+        $today = \DateTime::createFromFormat('Y-m-d', $now->format('Y-m-d'));
+        $today->setTime(0, 0, 0);
+        $todayImmutable = \DateTimeImmutable::createFromMutable($today);
+
+        $this->totalScans++;
+        $this->lastScannedAt = $now;
+
+        if ($this->lastScanDate === null || $this->lastScanDate->format('Y-m-d') !== $todayImmutable->format('Y-m-d')) {
+            $this->scansToday = 1;
+            $this->lastScanDate = $todayImmutable;
+        } else {
+            $this->scansToday++;
+        }
     }
 }

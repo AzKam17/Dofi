@@ -37,7 +37,10 @@ class QRCodeScanController extends AbstractController
         ];
         $scan->setMetadata($metadata);
 
+        $qrCode->incrementScans();
+
         $this->entityManager->persist($scan);
+        $this->entityManager->persist($qrCode);
         $this->entityManager->flush();
 
         $restaurant = $qrCode->getRestaurant();

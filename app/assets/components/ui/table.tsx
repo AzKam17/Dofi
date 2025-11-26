@@ -1,10 +1,12 @@
 import * as React from "react"
+import { ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react"
 
 interface Column {
   key: string
   label: string
   icon?: React.ReactNode
   align?: "left" | "right"
+  sortable?: boolean
   render?: (value: any, row: any) => React.ReactNode
 }
 
@@ -12,9 +14,12 @@ interface TableProps {
   columns: Column[]
   data: any[]
   loading?: boolean
+  sortKey?: string
+  sortDirection?: "asc" | "desc"
+  onSort?: (key: string) => void
 }
 
-export function Table({ columns, data, loading }: TableProps) {
+export function Table({ columns, data, loading, sortKey, sortDirection, onSort }: TableProps) {
   if (loading) {
     return (
       <div className="bg-white rounded-lg border border-gray-200">
@@ -35,6 +40,17 @@ export function Table({ columns, data, loading }: TableProps) {
     )
   }
 
+  const getSortIcon = (columnKey: string) => {
+    if (sortKey !== columnKey) {
+      return <ChevronsUpDown className="w-3 h-3 text-gray-400" />
+    }
+    return sortDirection === "asc" ? (
+      <ChevronUp className="w-3 h-3" />
+    ) : (
+      <ChevronDown className="w-3 h-3" />
+    )
+  }
+
   return (
     <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
       <div className="overflow-x-auto">
@@ -48,10 +64,21 @@ export function Table({ columns, data, loading }: TableProps) {
                     column.align === "right" ? "text-right" : "text-left"
                   }`}
                 >
-                  <div className="flex items-center gap-2">
-                    {column.icon}
-                    <span>{column.label}</span>
-                  </div>
+                  {column.sortable && onSort ? (
+                    <button
+                      onClick={() => onSort(column.key)}
+                      className="flex items-center gap-2 hover:text-black transition-colors"
+                    >
+                      {column.icon}
+                      <span>{column.label}</span>
+                      {getSortIcon(column.key)}
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      {column.icon}
+                      <span>{column.label}</span>
+                    </div>
+                  )}
                 </th>
               ))}
             </tr>

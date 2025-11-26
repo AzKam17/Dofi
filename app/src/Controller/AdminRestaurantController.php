@@ -26,7 +26,7 @@ class AdminRestaurantController extends AbstractController
         $search = $request->query->get('search', '');
 
         $qb = $this->restaurantRepository->createQueryBuilder('r')
-            ->leftJoin('r.user', 'u')
+            ->leftJoin('r.owner', 'u')
             ->orderBy('r.createdAt', 'DESC');
 
         if ($search) {
@@ -34,8 +34,16 @@ class AdminRestaurantController extends AbstractController
                 ->setParameter('search', '%' . $search . '%');
         }
 
-        $totalQuery = clone $qb;
-        $total = $totalQuery->select('COUNT(r.id)')->getQuery()->getSingleScalarResult();
+        $countQb = $this->restaurantRepository->createQueryBuilder('r')
+            ->select('COUNT(DISTINCT r.id)');
+
+        if ($search) {
+            $countQb->leftJoin('r.owner', 'u')
+                ->where('r.name ILIKE :search OR r.slug ILIKE :search OR u.phoneNumber ILIKE :search')
+                ->setParameter('search', '%' . $search . '%');
+        }
+
+        $total = $countQb->getQuery()->getSingleScalarResult();
         $totalPages = max(1, (int) ceil($total / $perPage));
 
         $restaurants = $qb
@@ -49,7 +57,7 @@ class AdminRestaurantController extends AbstractController
                 'id' => $restaurant->getId()->toRfc4122(),
                 'name' => $restaurant->getName(),
                 'slug' => $restaurant->getSlug(),
-                'userPhone' => $restaurant->getUser()?->getPhoneNumber(),
+                'userPhone' => $restaurant->getOwner()?->getPhoneNumber(),
                 'createdAt' => $restaurant->getCreatedAt()->format('c'),
             ];
         }, $restaurants);

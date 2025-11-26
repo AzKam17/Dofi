@@ -31,10 +31,21 @@ class AdminQRCodeController extends AbstractController
         $perPage = 20;
         $search = $request->query->get('search', '');
         $filter = $request->query->get('filter', 'all'); // all, assigned, unassigned
+        $restaurantFilter = $request->query->get('restaurant', '');
+        $sortKey = $request->query->get('sort', 'updatedAt');
+        $sortDirection = $request->query->get('direction', 'desc');
+
+        $allowedSortKeys = ['code', 'totalScans', 'scansToday', 'lastScannedAt', 'updatedAt', 'createdAt'];
+        if (!in_array($sortKey, $allowedSortKeys)) {
+            $sortKey = 'updatedAt';
+        }
+
+        $sortDirection = strtoupper($sortDirection) === 'ASC' ? 'ASC' : 'DESC';
 
         $qb = $this->qrCodeRepository->createQueryBuilder('q')
             ->leftJoin('q.restaurant', 'r')
-            ->orderBy('q.createdAt', 'DESC');
+            ->orderBy('q.' . $sortKey, $sortDirection)
+            ->addOrderBy('q.createdAt', 'DESC');
 
         if ($search) {
             $qb->where('q.code ILIKE :search OR q.tableName ILIKE :search OR r.name ILIKE :search')
@@ -47,8 +58,32 @@ class AdminQRCodeController extends AbstractController
             $qb->andWhere('q.restaurant IS NULL');
         }
 
-        $totalQuery = clone $qb;
-        $total = $totalQuery->select('COUNT(q.id)')->getQuery()->getSingleScalarResult();
+        if ($restaurantFilter) {
+            $qb->andWhere('q.restaurant = :restaurant')
+                ->setParameter('restaurant', $restaurantFilter);
+        }
+
+        $countQb = $this->qrCodeRepository->createQueryBuilder('q')
+            ->select('COUNT(DISTINCT q.id)');
+
+        if ($search) {
+            $countQb->leftJoin('q.restaurant', 'r')
+                ->where('q.code ILIKE :search OR q.tableName ILIKE :search OR r.name ILIKE :search')
+                ->setParameter('search', '%' . $search . '%');
+        }
+
+        if ($filter === 'assigned') {
+            $countQb->andWhere('q.restaurant IS NOT NULL');
+        } elseif ($filter === 'unassigned') {
+            $countQb->andWhere('q.restaurant IS NULL');
+        }
+
+        if ($restaurantFilter) {
+            $countQb->andWhere('q.restaurant = :restaurant')
+                ->setParameter('restaurant', $restaurantFilter);
+        }
+
+        $total = $countQb->getQuery()->getSingleScalarResult();
         $totalPages = max(1, (int) ceil($total / $perPage));
 
         $qrCodes = $qb
@@ -64,7 +99,12 @@ class AdminQRCodeController extends AbstractController
                 'tableName' => $qrCode->getTableName(),
                 'restaurantId' => $qrCode->getRestaurant()?->getId()->toRfc4122(),
                 'restaurantName' => $qrCode->getRestaurant()?->getName(),
+                'url' => '/q/' . $qrCode->getCode(),
+                'lastScannedAt' => $qrCode->getLastScannedAt()?->format('c'),
+                'totalScans' => $qrCode->getTotalScans(),
+                'scansToday' => $qrCode->getScansToday(),
                 'createdAt' => $qrCode->getCreatedAt()->format('c'),
+                'updatedAt' => $qrCode->getUpdatedAt()?->format('c'),
             ];
         }, $qrCodes);
 
@@ -84,7 +124,10 @@ class AdminQRCodeController extends AbstractController
             'totalPages' => $totalPages,
             'search' => $search,
             'filter' => $filter,
+            'restaurantFilter' => $restaurantFilter,
             'total' => $total,
+            'sortKey' => $sortKey,
+            'sortDirection' => strtolower($sortDirection),
         ]);
     }
 

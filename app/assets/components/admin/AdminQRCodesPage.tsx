@@ -1,7 +1,7 @@
 import * as React from "react"
 import { AdminLayout } from "./AdminLayout"
 import { Table, Pagination } from "@/components/ui/table"
-import { QrCode, Search, Plus, Link as LinkIcon, Unlink } from "lucide-react"
+import { QrCode, Search, Plus, Link as LinkIcon, Unlink, ExternalLink, Eye, Calendar } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
 
@@ -11,7 +11,12 @@ interface QRCodeItem {
   tableName: string | null
   restaurantId: string | null
   restaurantName: string | null
+  url: string
+  lastScannedAt: string | null
+  totalScans: number
+  scansToday: number
   createdAt: string
+  updatedAt: string | null
 }
 
 interface Restaurant {
@@ -26,7 +31,10 @@ interface AdminQRCodesPageProps {
   totalPages: number
   search: string
   filter: string
+  restaurantFilter: string
   total: number
+  sortKey: string
+  sortDirection: "asc" | "desc"
 }
 
 export function AdminQRCodesPage({
@@ -36,10 +44,14 @@ export function AdminQRCodesPage({
   totalPages,
   search,
   filter,
+  restaurantFilter,
   total,
+  sortKey,
+  sortDirection,
 }: AdminQRCodesPageProps) {
   const [searchValue, setSearchValue] = React.useState(search)
   const [filterValue, setFilterValue] = React.useState(filter)
+  const [restaurantFilterValue, setRestaurantFilterValue] = React.useState(restaurantFilter)
   const [generatingCount, setGeneratingCount] = React.useState(10)
   const [isGenerating, setIsGenerating] = React.useState(false)
   const [assigningQRCode, setAssigningQRCode] = React.useState<string | null>(null)
@@ -57,6 +69,27 @@ export function AdminQRCodesPage({
     setFilterValue(newFilter)
     const params = new URLSearchParams(window.location.search)
     params.set('filter', newFilter)
+    params.set('page', '1')
+    window.location.href = `/admin/qrcodes?${params.toString()}`
+  }
+
+  const handleSort = (key: string) => {
+    const params = new URLSearchParams(window.location.search)
+    const newDirection = sortKey === key && sortDirection === 'desc' ? 'asc' : 'desc'
+    params.set('sort', key)
+    params.set('direction', newDirection)
+    params.set('page', '1')
+    window.location.href = `/admin/qrcodes?${params.toString()}`
+  }
+
+  const handleRestaurantFilterChange = (restaurantId: string) => {
+    setRestaurantFilterValue(restaurantId)
+    const params = new URLSearchParams(window.location.search)
+    if (restaurantId) {
+      params.set('restaurant', restaurantId)
+    } else {
+      params.delete('restaurant')
+    }
     params.set('page', '1')
     window.location.href = `/admin/qrcodes?${params.toString()}`
   }
@@ -135,17 +168,46 @@ export function AdminQRCodesPage({
     })
   }
 
+  const formatDateTime = (dateString: string | null) => {
+    if (!dateString) return <span className="text-gray-400">-</span>
+    return new Date(dateString).toLocaleString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+  }
+
   const columns = [
     {
       key: 'code',
       label: 'Code',
       icon: <QrCode className="w-4 h-4" />,
       align: 'left' as const,
-      render: (value: string) => (
-        <span className="font-mono font-bold bg-black text-white px-2 py-1 rounded">
-          {value}
-        </span>
+      sortable: true,
+      render: (value: string, row: QRCodeItem) => (
+        <div className="flex items-center gap-2">
+          <span className="font-mono font-bold bg-black text-white px-2 py-1 rounded">
+            {value}
+          </span>
+          <a
+            href={row.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:text-blue-800"
+            title="Visiter le code"
+          >
+            <ExternalLink className="w-4 h-4" />
+          </a>
+        </div>
       ),
+    },
+    {
+      key: 'restaurantName',
+      label: 'Restaurant',
+      align: 'left' as const,
+      render: (value: string | null) => value || <span className="text-gray-400">Non assigné</span>,
     },
     {
       key: 'tableName',
@@ -154,22 +216,43 @@ export function AdminQRCodesPage({
       render: (value: string | null) => value || <span className="text-gray-400">-</span>,
     },
     {
-      key: 'restaurantName',
-      label: 'Restaurant',
+      key: 'totalScans',
+      label: 'Scans total',
+      icon: <Eye className="w-4 h-4" />,
+      align: 'right' as const,
+      sortable: true,
+      render: (value: number) => <span className="font-mono">{value}</span>,
+    },
+    {
+      key: 'scansToday',
+      label: "Scans aujourd'hui",
+      icon: <Calendar className="w-4 h-4" />,
+      align: 'right' as const,
+      sortable: true,
+      render: (value: number) => <span className="font-mono">{value}</span>,
+    },
+    {
+      key: 'lastScannedAt',
+      label: 'Dernier scan',
+      align: 'right' as const,
+      sortable: true,
+      render: (value: string | null) => formatDateTime(value),
+    },
+    {
+      key: 'actions',
+      label: 'Actions',
       align: 'left' as const,
-      render: (value: string | null, row: QRCodeItem) => {
-        if (value) {
+      render: (_value: any, row: QRCodeItem) => {
+        if (row.restaurantName) {
           return (
-            <div className="flex items-center gap-2">
-              <span>{value}</span>
-              <button
-                onClick={() => handleUnassign(row.id)}
-                className="text-red-600 hover:text-red-800"
-                title="Désassigner"
-              >
-                <Unlink className="w-4 h-4" />
-              </button>
-            </div>
+            <button
+              onClick={() => handleUnassign(row.id)}
+              className="text-red-600 hover:text-red-800 flex items-center gap-1"
+              title="Désassigner"
+            >
+              <Unlink className="w-4 h-4" />
+              Désassigner
+            </button>
           )
         }
         return (
@@ -182,12 +265,6 @@ export function AdminQRCodesPage({
           </button>
         )
       },
-    },
-    {
-      key: 'createdAt',
-      label: 'Date de création',
-      align: 'right' as const,
-      render: (value: string) => formatDate(value),
     },
   ]
 
@@ -253,7 +330,7 @@ export function AdminQRCodesPage({
             )}
           </form>
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
             <button
               onClick={() => handleFilterChange('all')}
               className={`px-4 py-2 rounded-lg ${
@@ -284,10 +361,28 @@ export function AdminQRCodesPage({
             >
               Non assignés
             </button>
+            <select
+              value={restaurantFilterValue}
+              onChange={(e) => handleRestaurantFilterChange(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+            >
+              <option value="">Tous les restaurants</option>
+              {restaurants.map((restaurant) => (
+                <option key={restaurant.id} value={restaurant.id}>
+                  {restaurant.name}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 
-        <Table columns={columns} data={qrCodes} />
+        <Table
+          columns={columns}
+          data={qrCodes}
+          sortKey={sortKey}
+          sortDirection={sortDirection}
+          onSort={handleSort}
+        />
 
         {totalPages > 1 && (
           <Pagination

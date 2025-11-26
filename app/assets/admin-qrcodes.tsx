@@ -14,7 +14,10 @@ if (rootElement) {
   const totalPages = parseInt(rootElement.dataset.totalPages || "1")
   const search = rootElement.dataset.search || ""
   const filter = rootElement.dataset.filter || "all"
+  const restaurantFilter = rootElement.dataset.restaurantFilter || ""
   const total = parseInt(rootElement.dataset.total || "0")
+  const sortKey = rootElement.dataset.sortKey || "updatedAt"
+  const sortDirection = (rootElement.dataset.sortDirection || "desc") as "asc" | "desc"
 
   const root = createRoot(rootElement)
   root.render(
@@ -25,7 +28,10 @@ if (rootElement) {
       totalPages={totalPages}
       search={search}
       filter={filter}
+      restaurantFilter={restaurantFilter}
       total={total}
+      sortKey={sortKey}
+      sortDirection={sortDirection}
     />
   )
 }
