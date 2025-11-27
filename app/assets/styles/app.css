@@ -55,5 +55,27 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Prevent white flash during page navigation */
+    background-color: white;
+    min-height: 100vh;
+  }
+
+  /* Prevent flash of unstyled content */
+  html {
+    background-color: white;
+  }
+
+  /* Smooth fade-in for page content */
+  body {
+    animation: fadeIn 0.15s ease-in;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
