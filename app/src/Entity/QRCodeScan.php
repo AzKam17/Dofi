@@ -22,6 +22,9 @@ class QRCodeScan
     #[ORM\Column]
     private ?\DateTimeImmutable $scannedAt = null;
 
+    #[ORM\Column(type: 'string', length: 64, nullable: true)]
+    private ?string $fingerprint = null;
+
     #[ORM\Column(type: 'json', nullable: true)]
     private ?array $metadata = null;
 
@@ -68,6 +71,18 @@ class QRCodeScan
     public function setMetadata(?array $metadata): static
     {
         $this->metadata = $metadata;
+
+        return $this;
+    }
+
+    public function getFingerprint(): ?string
+    {
+        return $this->fingerprint;
+    }
+
+    public function setFingerprint(?string $fingerprint): static
+    {
+        $this->fingerprint = $fingerprint;
 
         return $this;
     }

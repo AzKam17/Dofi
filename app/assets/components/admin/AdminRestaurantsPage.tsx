@@ -25,6 +25,7 @@ interface MenuItem {
 interface ScanItem {
   id: string
   scannedAt: string
+  fingerprint: string | null
   metadata: Record<string, any> | null
   qrCode: {
     code: string
@@ -924,6 +925,7 @@ export function AdminRestaurantsPage({
                         <th className="text-left py-3 px-4 font-medium text-gray-700">Code QR</th>
                         <th className="text-left py-3 px-4 font-medium text-gray-700">Table</th>
                         <th className="text-left py-3 px-4 font-medium text-gray-700">Date et heure</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-700">Empreinte</th>
                         <th className="text-left py-3 px-4 font-medium text-gray-700">Métadonnées</th>
                       </tr>
                     </thead>
@@ -952,6 +954,15 @@ export function AdminRestaurantsPage({
                                 second: '2-digit',
                               })}</div>
                             </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            {scan.fingerprint ? (
+                              <span className="font-mono text-xs text-gray-600" title={scan.fingerprint}>
+                                {scan.fingerprint.substring(0, 8)}...{scan.fingerprint.substring(56)}
+                              </span>
+                            ) : (
+                              <span className="text-gray-400 italic text-sm">Non disponible</span>
+                            )}
                           </td>
                           <td className="py-3 px-4">
                             {scan.metadata && Object.keys(scan.metadata).length > 0 ? (

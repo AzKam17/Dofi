@@ -462,6 +462,7 @@ class AdminRestaurantController extends AbstractController
             return [
                 'id' => $scan->getId()->toRfc4122(),
                 'scannedAt' => $scan->getScannedAt()->format('c'),
+                'fingerprint' => $scan->getFingerprint(),
                 'metadata' => $scan->getMetadata(),
                 'qrCode' => [
                     'code' => $qrCode->getCode(),
