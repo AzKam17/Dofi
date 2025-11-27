@@ -1,18 +1,26 @@
 import * as React from "react"
 import { AdminLayout } from "./AdminLayout"
 import { Table, Pagination } from "@/components/ui/table"
-import { Users, Phone, Search } from "lucide-react"
+import { Users, Phone, Search, Plus, UserPlus } from "lucide-react"
 import { Input } from "@/components/ui/input"
+import { Card } from "@/components/ui/card"
 
 interface User {
   id: string
   phoneNumber: string
+  name: string
   restaurantName: string | null
   createdAt: string
 }
 
+interface Restaurant {
+  id: string
+  name: string
+}
+
 interface AdminUsersPageProps {
   users: User[]
+  restaurants: Restaurant[]
   currentPage: number
   totalPages: number
   search: string
@@ -21,12 +29,22 @@ interface AdminUsersPageProps {
 
 export function AdminUsersPage({
   users,
+  restaurants,
   currentPage,
   totalPages,
   search,
   total,
 }: AdminUsersPageProps) {
   const [searchValue, setSearchValue] = React.useState(search)
+  const [showCreateForm, setShowCreateForm] = React.useState(false)
+  const [isCreating, setIsCreating] = React.useState(false)
+  const [formData, setFormData] = React.useState({
+    phoneNumber: '',
+    firstName: '',
+    lastName: '',
+    isAdmin: false,
+    restaurantId: '',
+  })
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -44,7 +62,39 @@ export function AdminUsersPage({
     })
   }
 
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (isCreating) return
+    setIsCreating(true)
+
+    try {
+      const response = await fetch('/admin/users/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        window.location.reload()
+      } else {
+        alert(data.error || 'Erreur lors de la création')
+      }
+    } catch (error) {
+      alert('Erreur lors de la création')
+    } finally {
+      setIsCreating(false)
+    }
+  }
+
   const columns = [
+    {
+      key: 'name',
+      label: 'Nom',
+      icon: <Users className="w-4 h-4" />,
+      align: 'left' as const,
+    },
     {
       key: 'phoneNumber',
       label: 'Téléphone',
@@ -73,7 +123,105 @@ export function AdminUsersPage({
             <h1 className="text-3xl font-bold text-black">Utilisateurs</h1>
             <p className="text-gray-600 mt-1">{total} utilisateur{total > 1 ? 's' : ''} au total</p>
           </div>
+          <button
+            onClick={() => setShowCreateForm(!showCreateForm)}
+            className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800"
+          >
+            <UserPlus className="w-4 h-4" />
+            Créer un utilisateur
+          </button>
         </div>
+
+        {showCreateForm && (
+          <Card className="p-6">
+            <h2 className="text-xl font-bold text-black mb-4">Nouvel utilisateur</h2>
+            <form onSubmit={handleCreateUser} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Numéro de téléphone *
+                  </label>
+                  <Input
+                    type="tel"
+                    placeholder="+33612345678"
+                    value={formData.phoneNumber}
+                    onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Prénom *
+                  </label>
+                  <Input
+                    type="text"
+                    placeholder="Jean"
+                    value={formData.firstName}
+                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Nom *
+                  </label>
+                  <Input
+                    type="text"
+                    placeholder="Dupont"
+                    value={formData.lastName}
+                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Restaurant (optionnel)
+                  </label>
+                  <select
+                    value={formData.restaurantId}
+                    onChange={(e) => setFormData({ ...formData, restaurantId: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                  >
+                    <option value="">Aucun restaurant</option>
+                    {restaurants.map((restaurant) => (
+                      <option key={restaurant.id} value={restaurant.id}>
+                        {restaurant.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="isAdmin"
+                  checked={formData.isAdmin}
+                  onChange={(e) => setFormData({ ...formData, isAdmin: e.target.checked })}
+                  className="w-4 h-4"
+                />
+                <label htmlFor="isAdmin" className="text-sm font-medium text-gray-700">
+                  Administrateur
+                </label>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  disabled={isCreating}
+                  className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50"
+                >
+                  {isCreating ? 'Création...' : 'Créer'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowCreateForm(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Annuler
+                </button>
+              </div>
+            </form>
+          </Card>
+        )}
 
         <form onSubmit={handleSearch} className="flex gap-2">
           <div className="relative flex-1 max-w-md">

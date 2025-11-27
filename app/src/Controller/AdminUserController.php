@@ -63,13 +63,22 @@ class AdminUserController extends AbstractController
                 'id' => $user->getId()->toRfc4122(),
                 'phoneNumber' => $user->getPhoneNumber(),
                 'name' => $user->getFirstName() . ' ' . $user->getLastName(),
-                'restaurantName' => $restaurant ? $restaurant->getName() : '-',
+                'restaurantName' => $restaurant ? $restaurant->getName() : null,
                 'createdAt' => $user->getCreatedAt()->format('c'),
             ];
         }, $users);
 
+        $restaurants = $this->restaurantRepository->findAll();
+        $restaurantsData = array_map(function ($restaurant) {
+            return [
+                'id' => $restaurant->getId()->toRfc4122(),
+                'name' => $restaurant->getName(),
+            ];
+        }, $restaurants);
+
         return $this->render('admin/users.html.twig', [
             'users' => json_encode($usersData),
+            'restaurants' => json_encode($restaurantsData),
             'currentPage' => $page,
             'totalPages' => $totalPages,
             'search' => $search,

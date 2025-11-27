@@ -7,7 +7,9 @@ const rootElement = document.getElementById("admin-users-root")
 
 if (rootElement) {
   const usersData = rootElement.dataset.users || "[]"
+  const restaurantsData = rootElement.dataset.restaurants || "[]"
   const users = JSON.parse(usersData)
+  const restaurants = JSON.parse(restaurantsData)
   const currentPage = parseInt(rootElement.dataset.currentPage || "1")
   const totalPages = parseInt(rootElement.dataset.totalPages || "1")
   const search = rootElement.dataset.search || ""
@@ -17,6 +19,7 @@ if (rootElement) {
   root.render(
     <AdminUsersPage
       users={users}
+      restaurants={restaurants}
       currentPage={currentPage}
       totalPages={totalPages}
       search={search}
