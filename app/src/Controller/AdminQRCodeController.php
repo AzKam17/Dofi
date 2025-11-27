@@ -169,6 +169,39 @@ class AdminQRCodeController extends AbstractController
         ]);
     }
 
+    #[Route('/qrcodes/create', name: 'admin_qrcodes_create', methods: ['POST'])]
+    public function create(Request $request): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+        $code = strtolower(trim($data['code'] ?? ''));
+
+        if (empty($code)) {
+            return new JsonResponse(['success' => false, 'error' => 'Le code est requis'], 400);
+        }
+
+        if (!preg_match('/^[a-z0-9]{3,10}$/', $code)) {
+            return new JsonResponse(['success' => false, 'error' => 'Le code doit contenir entre 3 et 10 caractères alphanumériques'], 400);
+        }
+
+        $existing = $this->qrCodeRepository->findOneBy(['code' => $code]);
+        if ($existing) {
+            return new JsonResponse(['success' => false, 'error' => 'Ce code existe déjà'], 409);
+        }
+
+        $qrCode = new QRCode();
+        $qrCode->setCode($code);
+        $this->entityManager->persist($qrCode);
+        $this->entityManager->flush();
+
+        return new JsonResponse([
+            'success' => true,
+            'qrCode' => [
+                'id' => $qrCode->getId()->toRfc4122(),
+                'code' => $qrCode->getCode(),
+            ],
+        ]);
+    }
+
     #[Route('/qrcodes/{id}/assign', name: 'admin_qrcodes_assign', methods: ['POST'])]
     public function assign(string $id, Request $request): JsonResponse
     {

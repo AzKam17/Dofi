@@ -2,18 +2,23 @@
 
 namespace App\Controller;
 
+use App\Entity\User;
 use App\Repository\UserRepository;
+use App\Repository\RestaurantRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Uid\Uuid;
 
 #[Route('/admin')]
 class AdminUserController extends AbstractController
 {
     public function __construct(
         private UserRepository $userRepository,
+        private RestaurantRepository $restaurantRepository,
         private EntityManagerInterface $entityManager
     ) {
     }
@@ -69,6 +74,59 @@ class AdminUserController extends AbstractController
             'totalPages' => $totalPages,
             'search' => $search,
             'total' => $total,
+        ]);
+    }
+
+    #[Route('/users/create', name: 'admin_users_create', methods: ['POST'])]
+    public function create(Request $request): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+
+        $phoneNumber = trim($data['phoneNumber'] ?? '');
+        $firstName = trim($data['firstName'] ?? '');
+        $lastName = trim($data['lastName'] ?? '');
+        $isAdmin = (bool) ($data['isAdmin'] ?? false);
+        $restaurantId = $data['restaurantId'] ?? null;
+
+        if (empty($phoneNumber)) {
+            return new JsonResponse(['success' => false, 'error' => 'Le numéro de téléphone est requis'], 400);
+        }
+
+        if (empty($firstName) || empty($lastName)) {
+            return new JsonResponse(['success' => false, 'error' => 'Le prénom et le nom sont requis'], 400);
+        }
+
+        $existing = $this->userRepository->findOneBy(['phoneNumber' => $phoneNumber]);
+        if ($existing) {
+            return new JsonResponse(['success' => false, 'error' => 'Un utilisateur avec ce numéro existe déjà'], 409);
+        }
+
+        $user = new User();
+        $user->setPhoneNumber($phoneNumber);
+        $user->setFirstName($firstName);
+        $user->setLastName($lastName);
+        $user->setIsAdmin($isAdmin);
+        $user->setIsVerified(true);
+
+        if ($restaurantId) {
+            $restaurant = $this->restaurantRepository->find(Uuid::fromString($restaurantId));
+            if ($restaurant) {
+                $user->setRestaurant($restaurant);
+            }
+        }
+
+        $this->entityManager->persist($user);
+        $this->entityManager->flush();
+
+        return new JsonResponse([
+            'success' => true,
+            'user' => [
+                'id' => $user->getId()->toRfc4122(),
+                'phoneNumber' => $user->getPhoneNumber(),
+                'firstName' => $user->getFirstName(),
+                'lastName' => $user->getLastName(),
+                'isAdmin' => $user->isAdmin(),
+            ],
         ]);
     }
 }

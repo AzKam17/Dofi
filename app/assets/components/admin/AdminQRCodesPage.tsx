@@ -55,6 +55,8 @@ export function AdminQRCodesPage({
   const [generatingCount, setGeneratingCount] = React.useState(10)
   const [isGenerating, setIsGenerating] = React.useState(false)
   const [assigningQRCode, setAssigningQRCode] = React.useState<string | null>(null)
+  const [customCode, setCustomCode] = React.useState('')
+  const [isCreatingCustom, setIsCreatingCustom] = React.useState(false)
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -116,6 +118,31 @@ export function AdminQRCodesPage({
       alert("Erreur lors de la génération")
     } finally {
       setIsGenerating(false)
+    }
+  }
+
+  const handleCreateCustom = async () => {
+    if (isCreatingCustom || !customCode.trim()) return
+    setIsCreatingCustom(true)
+
+    try {
+      const response = await fetch("/admin/qrcodes/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: customCode.trim() }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        window.location.reload()
+      } else {
+        alert(data.error || "Erreur lors de la création")
+      }
+    } catch (error) {
+      alert("Erreur lors de la création")
+    } finally {
+      setIsCreatingCustom(false)
     }
   }
 
@@ -278,29 +305,56 @@ export function AdminQRCodesPage({
           </div>
         </div>
 
-        <Card className="p-4">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Plus className="w-5 h-5 text-gray-600" />
-              <span className="font-medium">Générer des QR codes:</span>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card className="p-4">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Plus className="w-5 h-5 text-gray-600" />
+                <span className="font-medium">Générer aléatoirement:</span>
+              </div>
+              <Input
+                type="number"
+                min="1"
+                max="1000"
+                value={generatingCount}
+                onChange={(e) => setGeneratingCount(parseInt(e.target.value) || 1)}
+                className="w-24"
+              />
+              <button
+                onClick={handleGenerate}
+                disabled={isGenerating}
+                className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50"
+              >
+                {isGenerating ? "Génération..." : "Générer"}
+              </button>
             </div>
-            <Input
-              type="number"
-              min="1"
-              max="1000"
-              value={generatingCount}
-              onChange={(e) => setGeneratingCount(parseInt(e.target.value) || 1)}
-              className="w-24"
-            />
-            <button
-              onClick={handleGenerate}
-              disabled={isGenerating}
-              className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50"
-            >
-              {isGenerating ? "Génération..." : "Générer"}
-            </button>
-          </div>
-        </Card>
+          </Card>
+
+          <Card className="p-4">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <QrCode className="w-5 h-5 text-gray-600" />
+                <span className="font-medium">Créer avec un code:</span>
+              </div>
+              <Input
+                type="text"
+                placeholder="moncode"
+                value={customCode}
+                onChange={(e) => setCustomCode(e.target.value.toLowerCase())}
+                onKeyPress={(e) => e.key === 'Enter' && handleCreateCustom()}
+                className="flex-1"
+                maxLength={10}
+              />
+              <button
+                onClick={handleCreateCustom}
+                disabled={isCreatingCustom || !customCode.trim()}
+                className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50"
+              >
+                {isCreatingCustom ? "Création..." : "Créer"}
+              </button>
+            </div>
+          </Card>
+        </div>
 
         <div className="flex flex-col sm:flex-row gap-4">
           <form onSubmit={handleSearch} className="flex-1 flex gap-2">

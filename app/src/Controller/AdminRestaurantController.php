@@ -2,19 +2,26 @@
 
 namespace App\Controller;
 
+use App\Entity\Restaurant;
 use App\Repository\RestaurantRepository;
+use App\Repository\MenuRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Uid\Uuid;
 
 #[Route('/admin')]
 class AdminRestaurantController extends AbstractController
 {
     public function __construct(
         private RestaurantRepository $restaurantRepository,
-        private EntityManagerInterface $entityManager
+        private MenuRepository $menuRepository,
+        private EntityManagerInterface $entityManager,
+        private string $uploadsDirectory
     ) {
     }
 
@@ -69,5 +76,106 @@ class AdminRestaurantController extends AbstractController
             'search' => $search,
             'total' => $total,
         ]);
+    }
+
+    #[Route('/restaurants/create', name: 'admin_restaurants_create', methods: ['POST'])]
+    public function create(Request $request): JsonResponse
+    {
+        $name = trim($request->request->get('name', ''));
+        $description = trim($request->request->get('description', ''));
+
+        if (empty($name)) {
+            return new JsonResponse(['success' => false, 'error' => 'Le nom est requis'], 400);
+        }
+
+        $restaurant = new Restaurant();
+        $restaurant->setName($name);
+        if ($description) {
+            $restaurant->setDescription($description);
+        }
+
+        /** @var UploadedFile|null $logoFile */
+        $logoFile = $request->files->get('logo');
+        if ($logoFile) {
+            $filename = uniqid() . '.' . $logoFile->guessExtension();
+            $logoFile->move($this->uploadsDirectory . '/restaurants', $filename);
+            $restaurant->setPhotoPath('restaurants/' . $filename);
+        }
+
+        /** @var UploadedFile|null $backgroundFile */
+        $backgroundFile = $request->files->get('background');
+        if ($backgroundFile) {
+            $filename = uniqid() . '.' . $backgroundFile->guessExtension();
+            $backgroundFile->move($this->uploadsDirectory . '/restaurants', $filename);
+            $restaurant->setBackgroundPhotoPath('restaurants/' . $filename);
+        }
+
+        $this->entityManager->persist($restaurant);
+        $this->entityManager->flush();
+
+        return new JsonResponse([
+            'success' => true,
+            'restaurant' => [
+                'id' => $restaurant->getId()->toRfc4122(),
+                'name' => $restaurant->getName(),
+                'slug' => $restaurant->getSlug(),
+            ],
+        ]);
+    }
+
+    #[Route('/restaurants/{id}/menus', name: 'admin_restaurants_menus', methods: ['GET'])]
+    public function getMenus(string $id): JsonResponse
+    {
+        $restaurant = $this->restaurantRepository->find(Uuid::fromString($id));
+        if (!$restaurant) {
+            return new JsonResponse(['success' => false, 'error' => 'Restaurant non trouvé'], 404);
+        }
+
+        $menus = $this->menuRepository->createQueryBuilder('m')
+            ->where('m.restaurant = :restaurant')
+            ->setParameter('restaurant', $restaurant)
+            ->orderBy('m.displayOrder', 'ASC')
+            ->addOrderBy('m.createdAt', 'ASC')
+            ->getQuery()
+            ->getResult();
+
+        $menusData = array_map(function ($menu) {
+            return [
+                'id' => $menu->getId()->toRfc4122(),
+                'name' => $menu->getName(),
+                'type' => $menu->getType(),
+                'filePath' => $menu->getFilePath(),
+                'displayOrder' => $menu->getDisplayOrder(),
+                'createdAt' => $menu->getCreatedAt()->format('c'),
+            ];
+        }, $menus);
+
+        return new JsonResponse([
+            'success' => true,
+            'menus' => $menusData,
+        ]);
+    }
+
+    #[Route('/restaurants/{id}/menus/reorder', name: 'admin_restaurants_menus_reorder', methods: ['POST'])]
+    public function reorderMenus(string $id, Request $request): JsonResponse
+    {
+        $restaurant = $this->restaurantRepository->find(Uuid::fromString($id));
+        if (!$restaurant) {
+            return new JsonResponse(['success' => false, 'error' => 'Restaurant non trouvé'], 404);
+        }
+
+        $data = json_decode($request->getContent(), true);
+        $order = $data['order'] ?? [];
+
+        foreach ($order as $index => $menuId) {
+            $menu = $this->menuRepository->find(Uuid::fromString($menuId));
+            if ($menu && $menu->getRestaurant()->getId()->equals($restaurant->getId())) {
+                $menu->setDisplayOrder($index);
+            }
+        }
+
+        $this->entityManager->flush();
+
+        return new JsonResponse(['success' => true]);
     }
 }

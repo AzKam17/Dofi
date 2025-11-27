@@ -35,3 +35,7 @@ services:
     App\Controller\SettingsController:
         arguments:
             $uploadsDirectory: '%uploads_directory%'
+
+    App\Controller\AdminRestaurantController:
+        arguments:
+            $uploadsDirectory: '%uploads_directory%'
