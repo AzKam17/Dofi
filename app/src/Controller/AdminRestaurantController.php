@@ -179,6 +179,79 @@ class AdminRestaurantController extends AbstractController
         return new JsonResponse(['success' => true]);
     }
 
+    #[Route('/restaurants/{restaurantId}/menus/create', name: 'admin_restaurants_menus_create', methods: ['POST'])]
+    public function createMenu(string $restaurantId, Request $request): JsonResponse
+    {
+        $restaurant = $this->restaurantRepository->find(Uuid::fromString($restaurantId));
+        if (!$restaurant) {
+            return new JsonResponse(['success' => false, 'error' => 'Restaurant non trouvé'], 404);
+        }
+
+        $name = trim($request->request->get('name', ''));
+        $type = $request->request->get('type', '');
+
+        if (empty($name)) {
+            return new JsonResponse(['success' => false, 'error' => 'Le nom est requis'], 400);
+        }
+
+        if (!in_array($type, ['pdf', 'image'])) {
+            return new JsonResponse(['success' => false, 'error' => 'Type invalide'], 400);
+        }
+
+        /** @var UploadedFile|null $file */
+        $file = $request->files->get('file');
+        if (!$file) {
+            return new JsonResponse(['success' => false, 'error' => 'Le fichier est requis'], 400);
+        }
+
+        if ($type === 'pdf' && $file->getMimeType() !== 'application/pdf') {
+            return new JsonResponse(['success' => false, 'error' => 'Le fichier doit être un PDF'], 400);
+        }
+
+        if ($type === 'image' && !str_starts_with($file->getMimeType(), 'image/')) {
+            return new JsonResponse(['success' => false, 'error' => 'Le fichier doit être une image'], 400);
+        }
+
+        $filename = uniqid() . '.' . $file->guessExtension();
+        $restaurantDir = $this->uploadsDirectory . '/menus/' . $restaurant->getId();
+
+        if (!is_dir($restaurantDir)) {
+            mkdir($restaurantDir, 0755, true);
+        }
+
+        $file->move($restaurantDir, $filename);
+
+        $menu = new \App\Entity\Menu();
+        $menu->setName($name);
+        $menu->setType($type);
+        $menu->setFilePath('menus/' . $restaurant->getId() . '/' . $filename);
+        $menu->setRestaurant($restaurant);
+
+        $maxOrder = $this->menuRepository->createQueryBuilder('m')
+            ->select('MAX(m.displayOrder)')
+            ->where('m.restaurant = :restaurant')
+            ->setParameter('restaurant', $restaurant)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        $menu->setDisplayOrder(($maxOrder ?? -1) + 1);
+
+        $this->entityManager->persist($menu);
+        $this->entityManager->flush();
+
+        return new JsonResponse([
+            'success' => true,
+            'menu' => [
+                'id' => $menu->getId()->toRfc4122(),
+                'name' => $menu->getName(),
+                'type' => $menu->getType(),
+                'filePath' => $menu->getFilePath(),
+                'displayOrder' => $menu->getDisplayOrder(),
+                'createdAt' => $menu->getCreatedAt()->format('c'),
+            ],
+        ]);
+    }
+
     #[Route('/restaurants/{restaurantId}/menus/{menuId}', name: 'admin_restaurants_menus_update', methods: ['POST'])]
     public function updateMenu(string $restaurantId, string $menuId, Request $request): JsonResponse
     {
@@ -265,78 +338,5 @@ class AdminRestaurantController extends AbstractController
         $this->entityManager->flush();
 
         return new JsonResponse(['success' => true]);
-    }
-
-    #[Route('/restaurants/{restaurantId}/menus/create', name: 'admin_restaurants_menus_create', methods: ['POST'])]
-    public function createMenu(string $restaurantId, Request $request): JsonResponse
-    {
-        $restaurant = $this->restaurantRepository->find(Uuid::fromString($restaurantId));
-        if (!$restaurant) {
-            return new JsonResponse(['success' => false, 'error' => 'Restaurant non trouvé'], 404);
-        }
-
-        $name = trim($request->request->get('name', ''));
-        $type = $request->request->get('type', '');
-
-        if (empty($name)) {
-            return new JsonResponse(['success' => false, 'error' => 'Le nom est requis'], 400);
-        }
-
-        if (!in_array($type, ['pdf', 'image'])) {
-            return new JsonResponse(['success' => false, 'error' => 'Type invalide'], 400);
-        }
-
-        /** @var UploadedFile|null $file */
-        $file = $request->files->get('file');
-        if (!$file) {
-            return new JsonResponse(['success' => false, 'error' => 'Le fichier est requis'], 400);
-        }
-
-        if ($type === 'pdf' && $file->getMimeType() !== 'application/pdf') {
-            return new JsonResponse(['success' => false, 'error' => 'Le fichier doit être un PDF'], 400);
-        }
-
-        if ($type === 'image' && !str_starts_with($file->getMimeType(), 'image/')) {
-            return new JsonResponse(['success' => false, 'error' => 'Le fichier doit être une image'], 400);
-        }
-
-        $filename = uniqid() . '.' . $file->guessExtension();
-        $restaurantDir = $this->uploadsDirectory . '/menus/' . $restaurant->getId();
-
-        if (!is_dir($restaurantDir)) {
-            mkdir($restaurantDir, 0755, true);
-        }
-
-        $file->move($restaurantDir, $filename);
-
-        $menu = new \App\Entity\Menu();
-        $menu->setName($name);
-        $menu->setType($type);
-        $menu->setFilePath('menus/' . $restaurant->getId() . '/' . $filename);
-        $menu->setRestaurant($restaurant);
-
-        $maxOrder = $this->menuRepository->createQueryBuilder('m')
-            ->select('MAX(m.displayOrder)')
-            ->where('m.restaurant = :restaurant')
-            ->setParameter('restaurant', $restaurant)
-            ->getQuery()
-            ->getSingleScalarResult();
-
-        $menu->setDisplayOrder(($maxOrder ?? -1) + 1);
-
-        $this->entityManager->persist($menu);
-        $this->entityManager->flush();
-
-        return new JsonResponse([
-            'success' => true,
-            'menu' => [
-                'id' => $menu->getId()->toRfc4122(),
-                'name' => $menu->getName(),
-                'type' => $menu->getType(),
-                'filePath' => $menu->getFilePath(),
-                'displayOrder' => $menu->getDisplayOrder(),
-                'createdAt' => $menu->getCreatedAt()->format('c'),
-            ],
-        ]);
     }
 }
