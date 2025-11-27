@@ -123,6 +123,90 @@ class AdminRestaurantController extends AbstractController
         ]);
     }
 
+    #[Route('/restaurants/{id}', name: 'admin_restaurants_get', methods: ['GET'])]
+    public function getRestaurant(string $id): JsonResponse
+    {
+        $restaurant = $this->restaurantRepository->find(Uuid::fromString($id));
+        if (!$restaurant) {
+            return new JsonResponse(['success' => false, 'error' => 'Restaurant non trouvé'], 404);
+        }
+
+        return new JsonResponse([
+            'success' => true,
+            'restaurant' => [
+                'id' => $restaurant->getId()->toRfc4122(),
+                'name' => $restaurant->getName(),
+                'slug' => $restaurant->getSlug(),
+                'description' => $restaurant->getDescription(),
+                'photoPath' => $restaurant->getPhotoPath(),
+                'backgroundPhotoPath' => $restaurant->getBackgroundPhotoPath(),
+            ],
+        ]);
+    }
+
+    #[Route('/restaurants/{id}', name: 'admin_restaurants_update', methods: ['POST'])]
+    public function updateRestaurant(string $id, Request $request): JsonResponse
+    {
+        $restaurant = $this->restaurantRepository->find(Uuid::fromString($id));
+        if (!$restaurant) {
+            return new JsonResponse(['success' => false, 'error' => 'Restaurant non trouvé'], 404);
+        }
+
+        $name = trim($request->request->get('name', ''));
+        $description = trim($request->request->get('description', ''));
+
+        if (empty($name)) {
+            return new JsonResponse(['success' => false, 'error' => 'Le nom est requis'], 400);
+        }
+
+        $restaurant->setName($name);
+        $restaurant->setDescription($description);
+
+        /** @var UploadedFile|null $logoFile */
+        $logoFile = $request->files->get('logo');
+        if ($logoFile) {
+            if ($restaurant->getPhotoPath()) {
+                $oldPath = $this->uploadsDirectory . '/' . $restaurant->getPhotoPath();
+                if (file_exists($oldPath)) {
+                    unlink($oldPath);
+                }
+            }
+
+            $filename = uniqid() . '.' . $logoFile->guessExtension();
+            $logoFile->move($this->uploadsDirectory . '/restaurants', $filename);
+            $restaurant->setPhotoPath('restaurants/' . $filename);
+        }
+
+        /** @var UploadedFile|null $backgroundFile */
+        $backgroundFile = $request->files->get('background');
+        if ($backgroundFile) {
+            if ($restaurant->getBackgroundPhotoPath()) {
+                $oldPath = $this->uploadsDirectory . '/' . $restaurant->getBackgroundPhotoPath();
+                if (file_exists($oldPath)) {
+                    unlink($oldPath);
+                }
+            }
+
+            $filename = uniqid() . '.' . $backgroundFile->guessExtension();
+            $backgroundFile->move($this->uploadsDirectory . '/restaurants', $filename);
+            $restaurant->setBackgroundPhotoPath('restaurants/' . $filename);
+        }
+
+        $this->entityManager->flush();
+
+        return new JsonResponse([
+            'success' => true,
+            'restaurant' => [
+                'id' => $restaurant->getId()->toRfc4122(),
+                'name' => $restaurant->getName(),
+                'slug' => $restaurant->getSlug(),
+                'description' => $restaurant->getDescription(),
+                'photoPath' => $restaurant->getPhotoPath(),
+                'backgroundPhotoPath' => $restaurant->getBackgroundPhotoPath(),
+            ],
+        ]);
+    }
+
     #[Route('/restaurants/{id}/menus', name: 'admin_restaurants_menus', methods: ['GET'])]
     public function getMenus(string $id): JsonResponse
     {

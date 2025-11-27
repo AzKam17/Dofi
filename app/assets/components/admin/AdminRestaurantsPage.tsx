@@ -58,6 +58,18 @@ export function AdminRestaurantsPage({
   const [menuFile, setMenuFile] = React.useState<File | null>(null)
   const [savingMenu, setSavingMenu] = React.useState(false)
   const [draggedIndex, setDraggedIndex] = React.useState<number | null>(null)
+  const [showEditRestaurant, setShowEditRestaurant] = React.useState(false)
+  const [restaurantFormData, setRestaurantFormData] = React.useState({
+    name: '',
+    description: '',
+  })
+  const [restaurantLogoFile, setRestaurantLogoFile] = React.useState<File | null>(null)
+  const [restaurantBackgroundFile, setRestaurantBackgroundFile] = React.useState<File | null>(null)
+  const [savingRestaurant, setSavingRestaurant] = React.useState(false)
+  const [currentRestaurantData, setCurrentRestaurantData] = React.useState<{
+    photoPath: string | null
+    backgroundPhotoPath: string | null
+  }>({ photoPath: null, backgroundPhotoPath: null })
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -125,9 +137,67 @@ export function AdminRestaurantsPage({
     }
   }
 
+  const loadRestaurantData = async (restaurantId: string) => {
+    try {
+      const response = await fetch(`/admin/restaurants/${restaurantId}`)
+      const data = await response.json()
+      if (data.success) {
+        setRestaurantFormData({
+          name: data.restaurant.name || '',
+          description: data.restaurant.description || '',
+        })
+        setCurrentRestaurantData({
+          photoPath: data.restaurant.photoPath,
+          backgroundPhotoPath: data.restaurant.backgroundPhotoPath,
+        })
+      }
+    } catch (error) {
+      alert('Erreur lors du chargement du restaurant')
+    }
+  }
+
   const handleManageMenus = async (restaurantId: string) => {
     setManagingMenusFor(restaurantId)
-    await loadMenus(restaurantId)
+    await Promise.all([loadMenus(restaurantId), loadRestaurantData(restaurantId)])
+  }
+
+  const handleSaveRestaurant = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (savingRestaurant || !managingMenusFor) return
+    setSavingRestaurant(true)
+
+    try {
+      const formDataToSend = new FormData()
+      formDataToSend.append('name', restaurantFormData.name)
+      formDataToSend.append('description', restaurantFormData.description)
+      if (restaurantLogoFile) {
+        formDataToSend.append('logo', restaurantLogoFile)
+      }
+      if (restaurantBackgroundFile) {
+        formDataToSend.append('background', restaurantBackgroundFile)
+      }
+
+      const response = await fetch(`/admin/restaurants/${managingMenusFor}`, {
+        method: 'POST',
+        body: formDataToSend,
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        await loadRestaurantData(managingMenusFor)
+        setShowEditRestaurant(false)
+        setRestaurantLogoFile(null)
+        setRestaurantBackgroundFile(null)
+        alert('Restaurant mis à jour avec succès')
+      } else {
+        alert(data.error || 'Erreur lors de la sauvegarde')
+      }
+    } catch (error) {
+      alert('Erreur lors de la sauvegarde')
+    } finally {
+      setSavingRestaurant(false)
+    }
   }
 
   const handleSaveMenu = async (e: React.FormEvent) => {
@@ -470,7 +540,160 @@ export function AdminRestaurantsPage({
               <p className="text-gray-600">Chargement...</p>
             ) : (
               <>
+                <div className="mb-6 pb-6 border-b border-gray-200">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-lg font-bold">Informations du restaurant</h4>
+                    <button
+                      onClick={() => setShowEditRestaurant(!showEditRestaurant)}
+                      className="flex items-center gap-2 px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
+                    >
+                      <Edit className="w-4 h-4" />
+                      {showEditRestaurant ? 'Annuler' : 'Modifier'}
+                    </button>
+                  </div>
+
+                  {showEditRestaurant ? (
+                    <form onSubmit={handleSaveRestaurant} className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Nom du restaurant *
+                          </label>
+                          <Input
+                            type="text"
+                            value={restaurantFormData.name}
+                            onChange={(e) => setRestaurantFormData({ ...restaurantFormData, name: e.target.value })}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Description
+                          </label>
+                          <Input
+                            type="text"
+                            value={restaurantFormData.description}
+                            onChange={(e) => setRestaurantFormData({ ...restaurantFormData, description: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <div className="flex items-center gap-2">
+                              <Image className="w-4 h-4" />
+                              Logo
+                            </div>
+                          </label>
+                          {currentRestaurantData.photoPath && !restaurantLogoFile && (
+                            <div className="mb-2">
+                              <img
+                                src={`/uploads/${currentRestaurantData.photoPath}`}
+                                alt="Logo actuel"
+                                className="w-20 h-20 object-cover rounded-lg border border-gray-200"
+                              />
+                              <p className="text-xs text-gray-500 mt-1">Logo actuel</p>
+                            </div>
+                          )}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => setRestaurantLogoFile(e.target.files?.[0] || null)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                          />
+                          {restaurantLogoFile && (
+                            <p className="text-sm text-gray-600 mt-1">{restaurantLogoFile.name}</p>
+                          )}
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <div className="flex items-center gap-2">
+                              <ImagePlus className="w-4 h-4" />
+                              Photo de fond
+                            </div>
+                          </label>
+                          {currentRestaurantData.backgroundPhotoPath && !restaurantBackgroundFile && (
+                            <div className="mb-2">
+                              <img
+                                src={`/uploads/${currentRestaurantData.backgroundPhotoPath}`}
+                                alt="Fond actuel"
+                                className="w-32 h-20 object-cover rounded-lg border border-gray-200"
+                              />
+                              <p className="text-xs text-gray-500 mt-1">Fond actuel</p>
+                            </div>
+                          )}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => setRestaurantBackgroundFile(e.target.files?.[0] || null)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                          />
+                          {restaurantBackgroundFile && (
+                            <p className="text-sm text-gray-600 mt-1">{restaurantBackgroundFile.name}</p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          type="submit"
+                          disabled={savingRestaurant}
+                          className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50"
+                        >
+                          {savingRestaurant ? 'Enregistrement...' : 'Enregistrer'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowEditRestaurant(false)
+                            setRestaurantLogoFile(null)
+                            setRestaurantBackgroundFile(null)
+                          }}
+                          className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                        >
+                          Annuler
+                        </button>
+                      </div>
+                    </form>
+                  ) : (
+                    <div className="space-y-2">
+                      <div>
+                        <span className="text-sm font-medium text-gray-700">Nom: </span>
+                        <span className="text-sm text-gray-900">{restaurantFormData.name}</span>
+                      </div>
+                      {restaurantFormData.description && (
+                        <div>
+                          <span className="text-sm font-medium text-gray-700">Description: </span>
+                          <span className="text-sm text-gray-900">{restaurantFormData.description}</span>
+                        </div>
+                      )}
+                      <div className="flex gap-4 mt-3">
+                        {currentRestaurantData.photoPath && (
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1">Logo</p>
+                            <img
+                              src={`/uploads/${currentRestaurantData.photoPath}`}
+                              alt="Logo"
+                              className="w-16 h-16 object-cover rounded-lg border border-gray-200"
+                            />
+                          </div>
+                        )}
+                        {currentRestaurantData.backgroundPhotoPath && (
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1">Photo de fond</p>
+                            <img
+                              src={`/uploads/${currentRestaurantData.backgroundPhotoPath}`}
+                              alt="Fond"
+                              className="w-24 h-16 object-cover rounded-lg border border-gray-200"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 <div className="mb-4">
+                  <h4 className="text-lg font-bold mb-3">Menus</h4>
                   <button
                     onClick={() => {
                       setShowAddMenu(true)
