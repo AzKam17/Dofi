@@ -20,7 +20,7 @@ final class Version20251126145855 extends AbstractMigration
     public function up(Schema $schema): void
     {
         // this up() migration is auto-generated, please modify it to your needs
-        $this->addSql('DROP INDEX uniq_880e0d76e7927c74');
+        $this->addSql('DROP INDEX IF EXISTS uniq_880e0d76e7927c74');
         $this->addSql('ALTER TABLE admin ADD phone_number VARCHAR(20) NOT NULL');
         $this->addSql('ALTER TABLE admin ADD otp_code VARCHAR(6) DEFAULT NULL');
         $this->addSql('ALTER TABLE admin ADD otp_expires_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL');
@@ -34,7 +34,7 @@ final class Version20251126145855 extends AbstractMigration
     public function down(Schema $schema): void
     {
         // this down() migration is auto-generated, please modify it to your needs
-        $this->addSql('DROP INDEX UNIQ_880E0D766B01BC5B');
+        $this->addSql('DROP INDEX IF EXISTS UNIQ_880E0D766B01BC5B');
         $this->addSql('ALTER TABLE admin ADD email VARCHAR(180) NOT NULL');
         $this->addSql('ALTER TABLE admin ADD roles JSON NOT NULL');
         $this->addSql('ALTER TABLE admin ADD password VARCHAR(255) NOT NULL');
