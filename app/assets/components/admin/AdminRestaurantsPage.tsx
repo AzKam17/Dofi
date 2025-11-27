@@ -1,7 +1,7 @@
 import * as React from "react"
 import { AdminLayout } from "./AdminLayout"
 import { Table, Pagination } from "@/components/ui/table"
-import { Utensils, Hash, Phone, Search, Plus, Image, ImagePlus, Menu as MenuIcon, Edit, Trash2, GripVertical, Upload, X, FileText, ImageIcon } from "lucide-react"
+import { Utensils, Hash, Phone, Search, Plus, Image, ImagePlus, Menu as MenuIcon, Edit, Trash2, GripVertical, Upload, X, FileText, ImageIcon, Eye, QrCode } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
 
@@ -20,6 +20,16 @@ interface MenuItem {
   filePath: string
   displayOrder: number
   createdAt: string
+}
+
+interface ScanItem {
+  id: string
+  scannedAt: string
+  metadata: Record<string, any> | null
+  qrCode: {
+    code: string
+    tableName: string | null
+  }
 }
 
 interface AdminRestaurantsPageProps {
@@ -70,6 +80,12 @@ export function AdminRestaurantsPage({
     photoPath: string | null
     backgroundPhotoPath: string | null
   }>({ photoPath: null, backgroundPhotoPath: null })
+  const [viewingScansFor, setViewingScansFor] = React.useState<string | null>(null)
+  const [scans, setScans] = React.useState<ScanItem[]>([])
+  const [loadingScans, setLoadingScans] = React.useState(false)
+  const [scansPage, setScansPage] = React.useState(1)
+  const [scansTotalPages, setScansTotalPages] = React.useState(1)
+  const [scansTotal, setScansTotal] = React.useState(0)
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -198,6 +214,29 @@ export function AdminRestaurantsPage({
     } finally {
       setSavingRestaurant(false)
     }
+  }
+
+  const loadScans = async (restaurantId: string, page: number = 1) => {
+    setLoadingScans(true)
+    try {
+      const response = await fetch(`/admin/restaurants/${restaurantId}/scans?page=${page}`)
+      const data = await response.json()
+      if (data.success) {
+        setScans(data.scans)
+        setScansPage(data.page)
+        setScansTotalPages(data.totalPages)
+        setScansTotal(data.total)
+      }
+    } catch (error) {
+      alert('Erreur lors du chargement des scans')
+    } finally {
+      setLoadingScans(false)
+    }
+  }
+
+  const handleViewScans = async (restaurantId: string) => {
+    setViewingScansFor(restaurantId)
+    await loadScans(restaurantId, 1)
   }
 
   const handleSaveMenu = async (e: React.FormEvent) => {
@@ -364,13 +403,22 @@ export function AdminRestaurantsPage({
       label: 'Actions',
       align: 'left' as const,
       render: (_value: any, row: Restaurant) => (
-        <button
-          onClick={() => handleManageMenus(row.id)}
-          className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
-        >
-          <MenuIcon className="w-4 h-4" />
-          Gérer les menus
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => handleManageMenus(row.id)}
+            className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
+          >
+            <MenuIcon className="w-4 h-4" />
+            Gérer les menus
+          </button>
+          <button
+            onClick={() => handleViewScans(row.id)}
+            className="text-green-600 hover:text-green-800 flex items-center gap-1"
+          >
+            <Eye className="w-4 h-4" />
+            Voir les scans
+          </button>
+        </div>
       ),
     },
   ]
@@ -839,6 +887,108 @@ export function AdminRestaurantsPage({
                         </div>
                       </div>
                     ))}
+                  </div>
+                )}
+              </>
+            )}
+          </Card>
+        </div>
+      )}
+
+      {viewingScansFor && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <Card className="max-w-6xl w-full max-h-[90vh] overflow-y-auto p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-xl font-bold">Historique des scans</h3>
+                <p className="text-sm text-gray-600 mt-1">{scansTotal} scan{scansTotal > 1 ? 's' : ''} au total</p>
+              </div>
+              <button
+                onClick={() => setViewingScansFor(null)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            {loadingScans ? (
+              <p className="text-gray-600">Chargement...</p>
+            ) : scans.length === 0 ? (
+              <p className="text-gray-600 text-center py-8">Aucun scan pour ce restaurant</p>
+            ) : (
+              <>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="text-left py-3 px-4 font-medium text-gray-700">Code QR</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-700">Table</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-700">Date et heure</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-700">Métadonnées</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {scans.map((scan) => (
+                        <tr key={scan.id} className="border-b border-gray-100 hover:bg-gray-50">
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-2">
+                              <QrCode className="w-4 h-4 text-gray-500" />
+                              <span className="font-mono font-medium">{scan.qrCode.code}</span>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            {scan.qrCode.tableName || <span className="text-gray-400 italic">Non définie</span>}
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="text-sm">
+                              <div>{new Date(scan.scannedAt).toLocaleDateString('fr-FR', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric',
+                              })}</div>
+                              <div className="text-gray-500">{new Date(scan.scannedAt).toLocaleTimeString('fr-FR', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                second: '2-digit',
+                              })}</div>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            {scan.metadata && Object.keys(scan.metadata).length > 0 ? (
+                              <details className="cursor-pointer">
+                                <summary className="text-blue-600 hover:text-blue-800 text-sm">
+                                  Voir les détails ({Object.keys(scan.metadata).length} champ{Object.keys(scan.metadata).length > 1 ? 's' : ''})
+                                </summary>
+                                <div className="mt-2 p-3 bg-gray-50 rounded-lg text-xs">
+                                  {Object.entries(scan.metadata).map(([key, value]) => (
+                                    <div key={key} className="py-1 flex gap-2">
+                                      <span className="font-medium text-gray-700">{key}:</span>
+                                      <span className="text-gray-600">{typeof value === 'object' ? JSON.stringify(value) : String(value)}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </details>
+                            ) : (
+                              <span className="text-gray-400 italic text-sm">Aucune métadonnée</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {scansTotalPages > 1 && (
+                  <div className="mt-4">
+                    <Pagination
+                      currentPage={scansPage}
+                      totalPages={scansTotalPages}
+                      onPageChange={(page) => {
+                        if (viewingScansFor) {
+                          loadScans(viewingScansFor, page)
+                        }
+                      }}
+                    />
                   </div>
                 )}
               </>

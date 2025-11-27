@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Restaurant;
 use App\Repository\RestaurantRepository;
 use App\Repository\MenuRepository;
+use App\Repository\QRCodeScanRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -20,6 +21,7 @@ class AdminRestaurantController extends AbstractController
     public function __construct(
         private RestaurantRepository $restaurantRepository,
         private MenuRepository $menuRepository,
+        private QRCodeScanRepository $qrCodeScanRepository,
         private EntityManagerInterface $entityManager,
         private string $uploadsDirectory
     ) {
@@ -422,5 +424,59 @@ class AdminRestaurantController extends AbstractController
         $this->entityManager->flush();
 
         return new JsonResponse(['success' => true]);
+    }
+
+    #[Route('/restaurants/{id}/scans', name: 'admin_restaurants_scans', methods: ['GET'])]
+    public function getScans(string $id, Request $request): JsonResponse
+    {
+        $restaurant = $this->restaurantRepository->find(Uuid::fromString($id));
+        if (!$restaurant) {
+            return new JsonResponse(['success' => false, 'error' => 'Restaurant non trouvé'], 404);
+        }
+
+        $page = max(1, (int) $request->query->get('page', 1));
+        $perPage = 50;
+
+        $qb = $this->qrCodeScanRepository->createQueryBuilder('s')
+            ->leftJoin('s.qrCode', 'q')
+            ->leftJoin('q.restaurant', 'r')
+            ->where('r.id = :restaurantId')
+            ->setParameter('restaurantId', $restaurant->getId())
+            ->orderBy('s.scannedAt', 'DESC')
+            ->setFirstResult(($page - 1) * $perPage)
+            ->setMaxResults($perPage);
+
+        $scans = $qb->getQuery()->getResult();
+
+        $countQb = $this->qrCodeScanRepository->createQueryBuilder('s')
+            ->select('COUNT(s.id)')
+            ->leftJoin('s.qrCode', 'q')
+            ->leftJoin('q.restaurant', 'r')
+            ->where('r.id = :restaurantId')
+            ->setParameter('restaurantId', $restaurant->getId());
+
+        $total = $countQb->getQuery()->getSingleScalarResult();
+
+        $scansData = array_map(function ($scan) {
+            $qrCode = $scan->getQrCode();
+            return [
+                'id' => $scan->getId()->toRfc4122(),
+                'scannedAt' => $scan->getScannedAt()->format('c'),
+                'metadata' => $scan->getMetadata(),
+                'qrCode' => [
+                    'code' => $qrCode->getCode(),
+                    'tableName' => $qrCode->getTableName(),
+                ],
+            ];
+        }, $scans);
+
+        return new JsonResponse([
+            'success' => true,
+            'scans' => $scansData,
+            'total' => $total,
+            'page' => $page,
+            'perPage' => $perPage,
+            'totalPages' => ceil($total / $perPage),
+        ]);
     }
 }
